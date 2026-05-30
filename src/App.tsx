@@ -97,8 +97,8 @@ export default function App() {
 
   const currentConfig: CardConfig = {
     id: "nathnael-common-invitation",
-    senderName: "Friends & Crew",
-    recipientName: "Nathnael Ayzohibel",
+    senderName: "Meba D. GOAT",
+    recipientName: "Friends & Crew",
     birthdayDate: "June 7",
     theme,
     message: INVITATION_MESSAGE,
