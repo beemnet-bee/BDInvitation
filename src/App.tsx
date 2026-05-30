@@ -14,10 +14,7 @@ import {
 
 // Elegant preset RSVP records to populate the initial Meadow Guestboard
 const INITIAL_GUESTS = [
-  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" },
-  { name: "Beemnet Y.", attending: true, song: "Sunset Picnic Lo-Fi", note: "Excited for the birthday boy, bringing special sweet treats! 🍓🤍", date: "May 29, 2026" },
-  { name: "Rediet A.", attending: true, song: "Anime Theme Medley", note: "Mafia champion is ready. No one suspects a thing! 🤫🃏", date: "May 29, 2026" },
-  { name: "Hermela K.", attending: true, song: "Picnic Melodies", note: "Can't wait Nati!! Happy 20th birthday 🌸", date: "May 28, 2026" }
+  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" }
 ];
 
 export default function App() {
@@ -38,6 +35,21 @@ export default function App() {
   const [formNote, setFormNote] = useState("");
 
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+
+  // Fetch alive RSVPs on load
+  useEffect(() => {
+    fetch("/api/rsvp")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setRsvpList(data);
+          localStorage.setItem("picnic_rsvp_list", JSON.stringify(data));
+        }
+      })
+      .catch(err => {
+        console.error("Backend RSVP load error, fallback to local storage:", err);
+      });
+  }, []);
 
   // Countdown timer state
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
@@ -141,17 +153,36 @@ export default function App() {
     e.preventDefault();
     if (!formName.trim()) return;
 
-    const newRsvp = {
-      name: formName,
+    const payload = {
+      name: formName.trim(),
       attending: formAttending,
       song: formSong.trim() || "Surprise Nati Vibes!",
-      note: formNote.trim() || "Sending best wishes on your 20th! 🤍",
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      note: formNote.trim() || "Sending best wishes on your 20th! 🤍"
     };
 
-    const updated = [newRsvp, ...rsvpList];
-    setRsvpList(updated);
-    localStorage.setItem("picnic_rsvp_list", JSON.stringify(updated));
+    // 1. Submit to our Server Database (updates for anyone visiting the website!)
+    fetch("/api/rsvp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData.success) {
+          setRsvpList(resData.list);
+          localStorage.setItem("picnic_rsvp_list", JSON.stringify(resData.list));
+        } else {
+          // If server fails, fallback to local memory
+          const fallbackEntry = { ...payload, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) };
+          setRsvpList([fallbackEntry, ...rsvpList]);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to post RSVP to server API:", err);
+        // Fallback locally
+        const fallbackEntry = { ...payload, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) };
+        setRsvpList([fallbackEntry, ...rsvpList]);
+      });
 
     // Clear form fields
     setFormName("");
@@ -161,7 +192,7 @@ export default function App() {
     // Fancy celebration visual sound cues
     playCelebrationBurst();
 
-    alert(`Surprise RSVP processed successfully for ${formName}! Check out the Meadow Guestboard! 🎉 🤍`);
+    alert(`Surprise RSVP processed successfully for ${payload.name}! It has been saved securely to the live registry guestlist. 🎉 🤍`);
   };
 
   const downloadICSFile = () => {
@@ -572,8 +603,8 @@ export default function App() {
                         )}
                         
                         <div className="flex justify-center items-center gap-1.5 mt-8 text-xs font-mono text-stone-400">
-                          <Heart size={12} className="text-rose-400 fill-rose-400" />
-                          <span>{totalAttending} friends confirmed attendance</span>
+                          <Heart size={12} className="text-rose-400 fill-rose-400 animate-pulse" />
+                          <span>Secure RSVP Registry Active</span>
                         </div>
                       </div>
                     </motion.div>
@@ -838,11 +869,11 @@ export default function App() {
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Message or Dietary Remarks 🤍</label>
+                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Funny or Sweet Message for Nati 🤍</label>
                             <textarea
                               value={formNote}
                               onChange={(e) => setFormNote(e.target.value)}
-                              placeholder="Leave a sweet note for Nati's birthday picnic..."
+                              placeholder="Leave a funny or sweet message that will be given to him..."
                               rows={3}
                               className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm resize-none"
                             />
@@ -859,42 +890,10 @@ export default function App() {
                         </form>
                       </div>
 
-                      {/* COLLABORATIVE SURPRISE MEADOW GUESTBOARD FOR THE CREW */}
-                      <div className={`glass-card rounded-[32px] border bg-white/90 p-6 sm:p-10 text-left ${themeStyles.cardShadow}`}>
-                        <div className="flex items-center justify-between mb-4 border-b border-stone-100 pb-4">
-                          <div className="flex items-center gap-2">
-                            <Heart size={16} className="text-rose-400 fill-rose-400" />
-                            <h3 className="font-serif font-black text-[#3a4245] text-lg">Meadow Guestboard</h3>
-                          </div>
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400">
-                            {totalAttending} RSVPs Confirmed
-                          </span>
-                        </div>
-
-                        <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-1">
-                          {rsvpList.map((guest, i) => (
-                            <div key={i} className="p-4 bg-stone-50/60 border border-stone-100 rounded-2xl flex flex-col gap-2">
-                              <div className="flex items-center justify-between gap-2.5">
-                                <span className="font-serif font-black text-sm text-[#3a4245]">
-                                  {guest.name}
-                                </span>
-                                <span className={`text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                  guest.attending ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-750"
-                                }`}>
-                                  {guest.attending ? "✓ Attending" : "Can't Attend"}
-                                </span>
-                              </div>
-                              <p className="text-xs text-stone-500 italic">
-                                "{guest.note}"
-                              </p>
-                              <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-stone-100 text-[10px] text-stone-400 font-mono">
-                                <span>Requested tune: <strong className="text-stone-500">{guest.song}</strong></span>
-                                <span>{guest.date}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      {/* SUBTLE NOTIFICATION NOTE */}
+                      <p className="text-[11px] text-stone-400 font-mono text-center tracking-wide mt-2">
+                        📥 Submissions instantly notified to Meba via Telegram Bot 🔔
+                      </p>
                     </motion.div>
                   )}
                 </AnimatePresence>

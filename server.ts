@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
@@ -70,6 +71,100 @@ Write a high-quality greeting specifically for the upcoming card.`;
   } catch (err: any) {
     console.error("Gemini API error:", err);
     res.status(500).json({ error: err.message || "Failed to generate birthday wish." });
+  }
+});
+
+const RSVP_FILE = path.join(process.cwd(), "rsvps.json");
+
+const INITIAL_GUESTS = [
+  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" }
+];
+
+function getRSVPs() {
+  try {
+    if (fs.existsSync(RSVP_FILE)) {
+      const data = fs.readFileSync(RSVP_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error("Failed to read rsvps.json:", error);
+  }
+  return INITIAL_GUESTS;
+}
+
+function saveRSVPs(list: any[]) {
+  try {
+    fs.writeFileSync(RSVP_FILE, JSON.stringify(list, null, 2), "utf-8");
+  } catch (error) {
+    console.error("Failed to write to rsvps.json:", error);
+  }
+}
+
+// RSVP API Routes
+app.get("/api/rsvp", (req, res) => {
+  res.json(getRSVPs());
+});
+
+app.post("/api/rsvp", (req, res) => {
+  try {
+    const { name, attending, song, note } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "Name is a required field." });
+    }
+
+    const currentList = getRSVPs();
+    const newEntry = {
+      name: name.trim(),
+      attending: !!attending,
+      song: song ? song.trim() : "Surprise Nati Vibes!",
+      note: note ? note.trim() : "Sending best wishes on your 20th! 🤍",
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    };
+
+    const updatedList = [newEntry, ...currentList];
+    saveRSVPs(updatedList);
+
+    // Dynamic Telegram notification dispatch to the Host (Meba)
+    try {
+      const tgToken = process.env.TELEGRAM_TOKEN || "8554836962:AAG0C4kFkGbjaMHpEirFbH47M2RxZmFvp8c";
+      const tgChatId = process.env.TELEGRAM_CHAT_ID || "5970769337";
+
+      const statusIcon = newEntry.attending ? "✅ YES, Count me in! 🎉" : "❌ NO, Can't make it 😢";
+      const messageText = 
+        `🔔 *New RSVP Received for Nati's Picnic!* 🌿🤍\n\n` +
+        `👤 *Guest Name:* ${newEntry.name}\n` +
+        `🎟️ *Attending:* ${statusIcon}\n` +
+        `🎵 *Song Request:* ${newEntry.song}\n` +
+        `💬 *Message:* "${newEntry.note}"\n\n` +
+        `📅 *Sent limit:* ${newEntry.date}`;
+
+      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: tgChatId,
+          text: messageText,
+          parse_mode: "Markdown"
+        })
+      })
+        .then(tgRes => {
+          if (!tgRes.ok) {
+            console.error("Telegram API alert failed with status:", tgRes.status);
+          } else {
+            console.log("Telegram notification sent successfully!");
+          }
+        })
+        .catch(tgErr => {
+          console.error("Telegram delivery promise failed:", tgErr);
+        });
+    } catch (tgOuterErr) {
+      console.error("Telegram system routing failure:", tgOuterErr);
+    }
+
+    res.json({ success: true, entry: newEntry, list: updatedList });
+  } catch (err: any) {
+    console.error("Failed to process RSVP post:", err);
+    res.status(500).json({ error: "Failed to record RSVP." });
   }
 });
 
