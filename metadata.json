@@ -1,6 +1,6 @@
 {
-  "name": "Birthday Card Creator",
-  "description": "Create, customize, and share animated birthday greeting cards with immersive multi-level animations, interactive balloon popping, blowing out cake candles, and an AI-powered greeting assistant for the June 7th celebration.",
+  "name": "Nati's 20th Birthday Picnic",
+  "description": "An interactive, custom-styled birthday picnic invitation dashboard featuring retro synthesizers, dynamic countdown, menu grids, a gift planner, and a persistent RSVP guestbook registry.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

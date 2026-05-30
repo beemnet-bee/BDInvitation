@@ -1,39 +1,84 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Sparkles, Calendar, Share2, Clipboard, MapPin, 
-  Clock, Check, Heart, HelpCircle, CheckSquare
+  Sparkles, Calendar, Share2, MapPin, 
+  Clock, Check, Heart, User, Music, MessageSquare, 
+  Info, Leaf, Gift, Smile, ArrowRight, Volume2, VolumeX, Mail
 } from "lucide-react";
-import { CardConfig, CardThemeType } from "./types";
-import GreetingCardViewer from "./components/GreetingCardViewer";
+import { CardThemeType } from "./types";
+import AmbientBackground from "./components/AmbientBackground";
+import { 
+  playPopSound, playCozySpark, playCelebrationBurst, 
+  playInvitationTheme, startAmbientBackground, stopAmbientBackground 
+} from "./utils/audio";
 
-// Pristine Common Invitation Message for everyone
-const INVITATION_MESSAGE = `✦ NATHNAEL AYZOHIBEL // JUNE 7 BASH COORDINATES ✦
-
-Date: Sunday, June 7th, 2026
-Location: The Neon Lounge // Latitude 45°N 76°W
-Target Frequency: High Resonance Loops
-
-"You are cordially invited to celebrate the successful compilation of another milestone orbit. Plan for extreme throughput of delicious pastries, intensive karaoke, and retro chiptune synthesizers. 
-
-Extinguish your firewalls and synchronize. See you at the coordinates."`;
+// Elegant preset RSVP records to populate the initial Meadow Guestboard
+const INITIAL_GUESTS = [
+  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" },
+  { name: "Beemnet Y.", attending: true, song: "Sunset Picnic Lo-Fi", note: "Excited for the birthday boy, bringing special sweet treats! 🍓🤍", date: "May 29, 2026" },
+  { name: "Rediet A.", attending: true, song: "Anime Theme Medley", note: "Mafia champion is ready. No one suspects a thing! 🤫🃏", date: "May 29, 2026" },
+  { name: "Hermela K.", attending: true, song: "Picnic Melodies", note: "Can't wait Nati!! Happy 20th birthday 🌸", date: "May 28, 2026" }
+];
 
 export default function App() {
   const [theme, setTheme] = useState<CardThemeType>("swiss");
-  const [hasRSVPed, setHasRSVPed] = useState<boolean>(() => {
-    return localStorage.getItem("nathnael_bash_rsvp") === "true";
+  const [isEnvelopeOpened, setIsEnvelopeOpened] = useState<boolean>(() => {
+    return localStorage.getItem("picnic_envelope_opened") === "true";
   });
+  const [activeTab, setActiveTab] = useState<"home" | "details" | "vibes" | "gifts" | "rsvp">("home");
   const [copiedLink, setCopiedLink] = useState(false);
-  const [rsvpCount, setRsvpCount] = useState<number>(() => {
-    // Generate a beautiful consistent number of confirmed friends
-    const savedCount = localStorage.getItem("nathnael_bash_rsvp_count");
-    if (savedCount) return parseInt(savedCount, 10);
-    const initial = 14 + Math.floor(Math.random() * 8);
-    localStorage.setItem("nathnael_bash_rsvp_count", initial.toString());
-    return initial;
+  const [rsvpList, setRsvpList] = useState<any[]>(() => {
+    const saved = localStorage.getItem("picnic_rsvp_list");
+    return saved ? JSON.parse(saved) : INITIAL_GUESTS;
   });
 
-  // Load theme from URL if present to make shared links preserve the aesthetics
+  const [formName, setFormName] = useState("");
+  const [formAttending, setFormAttending] = useState<boolean>(true);
+  const [formSong, setFormSong] = useState("");
+  const [formNote, setFormNote] = useState("");
+
+  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+
+  // Countdown timer state
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
+
+  // Calculate countdown to June 7, 2026 15:00:00 (3 PM)
+  useEffect(() => {
+    const targetDate = new Date("June 7, 2026 15:00:00").getTime();
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft(prev => ({ ...prev, isPast: true }));
+        return;
+      }
+
+      const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days: d, hours: h, minutes: m, seconds: s, isPast: false });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sync background music loops are connected when envelope is opened and music is toggled-on
+  useEffect(() => {
+    if (isEnvelopeOpened && isPlayingMusic) {
+      startAmbientBackground(theme);
+    } else {
+      stopAmbientBackground();
+    }
+    return () => stopAmbientBackground();
+  }, [isEnvelopeOpened, isPlayingMusic, theme]);
+
+  // Load configuration style parameters from URL search
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sharedTheme = params.get("style") as CardThemeType;
@@ -42,43 +87,98 @@ export default function App() {
     }
   }, []);
 
-  const handleRSVP = () => {
-    if (!hasRSVPed) {
-      setHasRSVPed(true);
-      setRsvpCount(prev => prev + 1);
-      localStorage.setItem("nathnael_bash_rsvp", "true");
-      localStorage.setItem("nathnael_bash_rsvp_count", (rsvpCount + 1).toString());
+  const handleOpenEnvelope = () => {
+    setIsEnvelopeOpened(true);
+    localStorage.setItem("picnic_envelope_opened", "true");
+    setIsPlayingMusic(true);
+    playCozySpark();
+    setTimeout(() => {
+      playInvitationTheme();
+      playCelebrationBurst();
+    }, 450);
+  };
+
+  const handleResetEnvelope = () => {
+    setIsEnvelopeOpened(false);
+    localStorage.removeItem("picnic_envelope_opened");
+    setIsPlayingMusic(false);
+    stopAmbientBackground();
+  };
+
+  const toggleMusic = () => {
+    if (!isPlayingMusic) {
+      setIsPlayingMusic(true);
+      playInvitationTheme();
     } else {
-      setHasRSVPed(false);
-      setRsvpCount(prev => prev - 1);
-      localStorage.setItem("nathnael_bash_rsvp", "false");
-      localStorage.setItem("nathnael_bash_rsvp_count", (rsvpCount - 1).toString());
+      setIsPlayingMusic(false);
+      stopAmbientBackground();
     }
   };
 
   const handleCopyLink = () => {
-    // Build direct link with selected visual style theme
     const shareUrl = `${window.location.origin}/?style=${theme}`;
     navigator.clipboard.writeText(shareUrl);
     setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    playCozySpark();
+    setTimeout(() => setCopiedLink(false), 2400);
+  };
+
+  // Trigger synthesized audio tones for the "Retro backyard Synth" sandbox in vibes page
+  const playSynthesizedTone = (type: "bird" | "spark" | "breeze" | "bubble") => {
+    if (type === "bird") {
+      // Gentle sweet chirping
+      playPopSound();
+    } else if (type === "spark") {
+      playCozySpark();
+    } else if (type === "breeze") {
+      playInvitationTheme();
+    } else {
+      playCelebrationBurst();
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim()) return;
+
+    const newRsvp = {
+      name: formName,
+      attending: formAttending,
+      song: formSong.trim() || "Surprise Nati Vibes!",
+      note: formNote.trim() || "Sending best wishes on your 20th! 🤍",
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    };
+
+    const updated = [newRsvp, ...rsvpList];
+    setRsvpList(updated);
+    localStorage.setItem("picnic_rsvp_list", JSON.stringify(updated));
+
+    // Clear form fields
+    setFormName("");
+    setFormSong("");
+    setFormNote("");
+
+    // Fancy celebration visual sound cues
+    playCelebrationBurst();
+
+    alert(`Surprise RSVP processed successfully for ${formName}! Check out the Meadow Guestboard! 🎉 🤍`);
   };
 
   const downloadICSFile = () => {
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Nathnael June 7th Celebration//EN",
+      "PRODID:-//Nati 20th Birthday Picnic Celebration//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "BEGIN:VEVENT",
-      "UID:nathnael-celebration-bash-2026@june7",
-      "DTSTAMP:20260529T164900Z",
-      "DTSTART:20260607T190000",
-      "DTEND:20260608T020000",
-      "SUMMARY:Nathnael's June 7th Celebration! ✦",
-      "DESCRIPTION:You are cordially invited to celebrate the successful compilation of another milestone orbit! Plan for extreme throughput of delicious pastries\\, intensive karaoke\\, and retro chiptune synthesizers.",
-      "LOCATION:The Neon Lounge\\, Boba City Mall\\, Sector 4",
+      "UID:nati-celebration-picnic-2026@june7",
+      "DTSTAMP:20260530T000000Z",
+      "DTSTART:20260607T150000",
+      "DTEND:20260607T200000",
+      "SUMMARY:Nati's 20th Birthday Picnic Celebration! 🌿🤍",
+      "DESCRIPTION:Prepare yourself for Nati's spectacular 20th birthday picnic party, where we'll soak up the sun and enjoy great company. Bring game controllers, cute coordinates, and retro chiptune vibes.",
+      "LOCATION:To be determined\\, Addis Ababa",
       "STATUS:CONFIRMED",
       "SEQUENCE:0",
       "END:VEVENT",
@@ -89,332 +189,754 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "nathnael_june_7_celebration.ics");
+    link.setAttribute("download", "nati_birthday_picnic_celebration.ics");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    playCozySpark();
   };
 
-  const currentConfig: CardConfig = {
-    id: "nathnael-common-invitation",
-    senderName: "Meba D. GOAT",
-    recipientName: "Friends & Crew",
-    birthdayDate: "June 7",
-    theme,
-    message: INVITATION_MESSAGE,
-    acousticMode: true
-  };
-
-  // Modern abstract class color accents for outer page matching the chosen card style
-  const bodyStyles = {
-    swiss: "from-stone-950 via-slate-950 to-stone-900 border-rose-500/20 text-stone-100",
-    acid: "from-stone-950 via-neutral-950 to-neutral-900 border-lime-400/20 text-neutral-100",
-    brutalist: "from-stone-100 via-stone-50 to-stone-200 border-black text-stone-900",
-    sunset: "from-[#0a0510] via-[#10031a] to-[#120024] border-rose-500/10 text-amber-50/90",
-    aurora: "from-[#020512] via-slate-950 to-[#031518] border-emerald-500/10 text-indigo-100"
+  // Dynamic Theme Aesthetics configs matching the beautiful color scheme requested
+  const themeStyles = {
+    swiss: { // Cream Periwinkle Breeze (Default matching image closely)
+      bodyBg: "bg-[#fbf9f3]",
+      accent: "text-[#7c95e4]",
+      accentBg: "bg-[#7c95e4]/10",
+      accentBorder: "border-[#7c95e4]/20",
+      accentBadge: "bg-[#7c95e4] text-[#fbf9f3]",
+      secondaryAccent: "text-[#90a98c]",
+      secondaryAccentBg: "bg-[#90a98c]/12",
+      headingText: "text-[#3a4245]",
+      bodyText: "text-[#5k6368]",
+      cardShadow: "shadow-[0_12px_45px_rgba(124,149,228,0.1)]",
+      buttonPrimary: "bg-[#7c95e4] hover:bg-[#687ecb] text-white shadow-[#7c95e4]/30",
+    },
+    acid: { // Sage Garden Meadow (Deep natural fresh meadow look)
+      bodyBg: "bg-[#fcfbf7]",
+      accent: "text-[#90a98c]",
+      accentBg: "bg-[#90a98c]/12",
+      accentBorder: "border-[#90a98c]/25",
+      accentBadge: "bg-[#90a98c] text-white",
+      secondaryAccent: "text-[#7c95e4]",
+      secondaryAccentBg: "bg-[#7c95e4]/12",
+      headingText: "text-[#2a3530]",
+      bodyText: "text-[#5e6662]",
+      cardShadow: "shadow-[0_12px_45px_rgba(144,169,140,0.12)]",
+      buttonPrimary: "bg-[#90a98c] hover:bg-[#7e977a] text-white shadow-[#90a98c]/30",
+    },
+    sunset: { // Blossom Rose Petal (Warm romantic bouquet style)
+      bodyBg: "bg-[#fcf9f5]",
+      accent: "text-[#e6a5b8]",
+      accentBg: "bg-[#e6a5b8]/15",
+      accentBorder: "border-[#e6a5b8]/30",
+      accentBadge: "bg-[#e6a5b8] text-white",
+      secondaryAccent: "text-[#90a98c]",
+      secondaryAccentBg: "bg-[#90a98c]/12",
+      headingText: "text-[#423a3d]",
+      bodyText: "text-[#665e61]",
+      cardShadow: "shadow-[0_12px_45px_rgba(230,165,184,0.15)]",
+      buttonPrimary: "bg-[#e6a5b8] hover:bg-[#da93a7] text-white shadow-[#e6a5b8]/30",
+    },
+    aurora: { // Twilight Starry Campfire (Magical cozy dark background setting)
+      bodyBg: "bg-[#1f242d]",
+      accent: "text-[#9eb1f0]",
+      accentBg: "bg-[#9eb1f0]/15",
+      accentBorder: "border-[#9eb1f0]/20",
+      accentBadge: "bg-[#9eb1f0] text-stone-950",
+      secondaryAccent: "text-[#a5c3a1]",
+      secondaryAccentBg: "bg-[#a5c3a1]/15",
+      headingText: "text-stone-100",
+      bodyText: "text-stone-300",
+      cardShadow: "shadow-[0_12px_45px_rgba(0,0,0,0.3)]",
+      buttonPrimary: "bg-[#9eb1f0] hover:bg-[#8da3e5] text-stone-950 shadow-[#9eb1f0]/25",
+    },
+    brutalist: { // Stark Minimalist Paper
+      bodyBg: "bg-white",
+      accent: "text-stone-950",
+      accentBg: "bg-stone-100",
+      accentBorder: "border-stone-900",
+      accentBadge: "bg-stone-950 text-white",
+      secondaryAccent: "text-stone-600",
+      secondaryAccentBg: "bg-stone-100",
+      headingText: "text-stone-950",
+      bodyText: "text-stone-750",
+      cardShadow: "shadow-[6px_6px_0px_rgba(0,0,0,1)]",
+      buttonPrimary: "bg-stone-950 hover:bg-stone-800 text-white shadow-none border border-stone-950",
+    }
   }[theme];
 
-  const dotGridPattern = {
-    swiss: "bg-[radial-gradient(rgba(225,29,72,0.06)_1px,transparent_1px)]",
-    acid: "bg-[radial-gradient(rgba(163,230,53,0.06)_1px,transparent_1px)]",
-    brutalist: "bg-[radial-gradient(rgba(0,0,0,0.08)_1px,transparent_1px)]",
-    sunset: "bg-[radial-gradient(rgba(244,63,94,0.05)_1px,transparent_1px)]",
-    aurora: "bg-[radial-gradient(rgba(34,211,238,0.05)_1px,transparent_1px)]"
-  }[theme];
+  const totalAttending = rsvpList.filter(r => r.attending).length;
 
   return (
-    <div className={`min-h-screen relative flex flex-col antialiased transition-colors duration-700 select-none pb-12 overflow-x-hidden bg-gradient-to-b ${bodyStyles}`}>
+    <div className={`min-h-screen relative flex flex-col antialiased transition-colors duration-700 select-none pb-12 overflow-x-hidden ${themeStyles.bodyBg} ${themeStyles.bodyText}`}>
       
-      {/* Decorative vector status line */}
-      <div className={`h-[3px] w-full transition-colors duration-700 ${
-        theme === "swiss" ? "bg-rose-600" :
-        theme === "acid" ? "bg-lime-400" :
-        theme === "brutalist" ? "bg-black" :
-        theme === "sunset" ? "bg-gradient-to-r from-amber-400 to-rose-500" :
-        "bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-500"
+      {/* Decorative vector top boundary line */}
+      <div className={`h-[4px] w-full transition-colors duration-700 ${
+        theme === "swiss" ? "bg-[#7c95e4]" :
+        theme === "acid" ? "bg-[#90a98c]" :
+        theme === "sunset" ? "bg-[#e6a5b8]" :
+        theme === "aurora" ? "bg-gradient-to-r from-[#9eb1f0] to-[#e6a5b8]" : "bg-stone-950"
       }`} />
 
-      {/* Cyber-abstract background grid */}
-      <div className={`absolute inset-0 pointer-events-none ${dotGridPattern} [background-size:20px_20px]`} />
+      {/* Cyber-abstract background dots */}
+      <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none opacity-[0.25] bg-[radial-gradient(rgba(124,149,228,0.15)_1px,transparent_1px)] [background-size:24px_24px]" />
 
-      <motion.header 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`border-b backdrop-blur-md sticky top-0 z-30 transition-colors duration-500 ${
-          theme === "brutalist" ? "border-black bg-stone-100/90" : "border-stone-900 bg-stone-950/50"
-        }`}
-      >
-        <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              whileHover={{ rotate: [0, -10, 10, 0], scale: 1.12 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="relative w-10 h-10 flex items-center justify-center select-none"
-            >
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect 
-                  x="6" y="6" width="88" height="88" rx="14" 
-                  stroke="currentColor" 
-                  strokeWidth="5" 
-                  className={`transition-all duration-500 ${
-                    theme === "brutalist" ? "text-black fill-stone-100" :
-                    theme === "swiss" ? "text-rose-500 fill-rose-950/10" :
-                    theme === "acid" ? "text-lime-400 fill-lime-950/25" :
-                    theme === "sunset" ? "text-amber-500 fill-amber-950/15" : "text-cyan-400 fill-cyan-950/15"
-                  }`}
-                />
-                <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="2.5" strokeDasharray="6 4" className="opacity-70 text-current transition-colors duration-500" />
-                <path d="M50 16 L50 84 M16 50 L84 50" stroke="currentColor" strokeWidth="1.5" className="opacity-40 text-current transition-colors duration-500" />
-                <circle cx="50" cy="50" r="6" fill="currentColor" className="text-rose-500 transition-colors duration-500" />
-              </svg>
-              <span className={`text-[10px] font-mono font-black z-10 tracking-tighter ${
-                theme === "brutalist" ? "text-black" : "text-white"
-              }`}>07</span>
-            </motion.div>
-            <div>
-              <h1 className="text-base font-black tracking-widest uppercase flex items-center gap-2">
-                JUNE 07 <span className={`text-[9px] border px-2 py-0.5 font-bold uppercase tracking-wider ${
-                  theme === "brutalist" ? "border-black bg-black text-white" :
-                  theme === "swiss" ? "border-rose-500/30 text-rose-400" :
-                  theme === "acid" ? "border-lime-400/35 text-lime-400" :
-                  theme === "sunset" ? "border-rose-500/30 text-rose-400" : "border-cyan-500/30 text-cyan-400"
-                }`}>Invitation Terminal</span>
-              </h1>
-              <p className="text-[9px] font-mono opacity-60 tracking-wider">Common Interactive Portal • Nathnael's Milestone Celebration</p>
-            </div>
-          </div>
+      {/* Dynamic Ambient Background Elements */}
+      <AmbientBackground theme={theme} />
 
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleCopyLink}
-              className={`flex items-center gap-2 px-4 py-2 font-mono text-[10px] tracking-widest uppercase border transition-all ${
-                theme === "brutalist" 
-                  ? "bg-black text-white border-black hover:bg-stone-800" 
-                  : "bg-stone-900/60 border-stone-800 hover:border-stone-600 text-stone-200"
-              }`}
-            >
-              <Share2 size={11} className={theme === "acid" ? "text-lime-400" : "text-rose-500"} />
-              {copiedLink ? "Link Copied" : "Copy Shared Route"}
-            </motion.button>
-          </div>
-        </div>
-      </motion.header>
+      {/* RUSTIC FLOWER/LEAF FRAME ELEMENTS IN THE CORNERS DEPICTING THE INVITE POSTER */}
+      <div className="absolute top-0 right-0 w-[180px] h-[180px] sm:w-[280px] sm:h-[280px] pointer-events-none opacity-40 md:opacity-55 z-0 select-none">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <circle cx="85" cy="15" r="14" fill={theme === "brutalist" ? "#000000" : "#e6a5b8"} opacity="0.45" />
+          <path d="M55,0 C68,18 78,12 100,22 M72,0 C77,14 86,6 100,10" stroke={theme === "acid" ? "#90a98c" : "currentColor"} strokeWidth="1.6" fill="none" className="text-[#90a98c] opacity-80" />
+          <circle cx="94" cy="38" r="4.5" fill="#7c95e4" opacity="0.6" />
+          <circle cx="68" cy="14" r="3.5" fill="#7c95e4" opacity="0.4" />
+          <path d="M90 5 C85 8, 80 12, 75 22" stroke="#e6a5b8" strokeWidth="1.2" fill="none" />
+        </svg>
+      </div>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 items-center justify-center z-10">
-        
-        {/* HERO INTRO */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-          className="text-center max-w-2xl flex flex-col gap-3"
-        >
-          <div className="flex items-center justify-center gap-1.5">
-            <span className={`text-[10px] font-mono tracking-[0.3em] uppercase block px-3 py-1 border rounded-full ${
-              theme === "brutalist" ? "bg-black text-white border-black" :
-              theme === "acid" ? "bg-lime-400/10 text-lime-400 border-lime-400/20" :
-              theme === "swiss" ? "bg-rose-500/10 text-rose-500 border-rose-500/20" :
-              theme === "sunset" ? "bg-amber-400/10 text-amber-400 border-amber-400/20" :
-              "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
-            }`}>
-              SYSTEM STATUS // 100% ONLINE
-            </span>
-          </div>
-          <h2 className={`text-3xl md:text-5xl font-black font-display uppercase tracking-tight ${
-            theme === "brutalist" ? "text-black" : "text-white"
-          }`}>
-            The Ultimate Celebration
-          </h2>
-          <p className={`text-xs md:text-sm font-sans font-light leading-relaxed max-w-xl mx-auto ${
-            theme === "brutalist" ? "text-stone-700" : "text-stone-300"
-          }`}>
-            We are gathering on Sunday, June 7th to honor Nathnael Ayzohibel. No signup or credentials needed. 
-            Open the envelope below to interact with the soundboard, extinguish the flame, and tap moving vectors to rack up points!
-          </p>
-        </motion.div>
+      <div className="absolute bottom-0 left-0 w-[180px] h-[180px] sm:w-[280px] sm:h-[280px] pointer-events-none opacity-40 md:opacity-55 z-0 select-none">
+        <svg viewBox="0 0 100 100" className="w-full h-full">
+          <path d="M0,85 C18,80 14,88 38,100 M0,66 C14,75 5,82 24,100" stroke={theme === "acid" ? "#90a98c" : "currentColor"} strokeWidth="1.6" fill="none" className="text-[#90a98c] opacity-80" />
+          <rect x="-10" y="80" width="35" height="35" fill="#7c95e4" opacity="0.22" transform="rotate(12)" />
+          <circle cx="16" cy="68" r="5" fill="#e6a5b8" opacity="0.5" />
+          <circle cx="38" cy="85" r="3" fill="#90a98c" opacity="0.6" />
+        </svg>
+      </div>
 
-        {/* STYLE SWITCHER REGION */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-          className={`p-4 md:p-5 border transition-all flex flex-col items-center gap-4 w-full max-w-lg ${
-            theme === "brutalist" ? "bg-stone-50 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)]" : "bg-stone-900/30 border-stone-800"
-          }`}
-        >
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] font-mono uppercase tracking-[0.25em] opacity-50 mb-1.5 block">
-              Toggle Poster Aesthetic Theme
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {[
-                { id: "swiss", label: "Swiss Grid" },
-                { id: "acid", label: "Acid Poison" },
-                { id: "brutalist", label: "Raw Brutalist" },
-                { id: "sunset", label: "Late Sunset" },
-                { id: "aurora", label: "Cosmic Aurora" }
-              ].map((t) => (
-                <motion.button
-                  whileHover={{ scale: 1.08, y: -2, transition: { type: "spring", stiffness: 400, damping: 10 } }}
-                  whileTap={{ scale: 0.94 }}
-                  key={t.id}
-                  onClick={() => setTheme(t.id as CardThemeType)}
-                  className={`px-3 py-1.5 font-mono uppercase text-[10px] tracking-wider border transition-all cursor-pointer ${
-                    theme === t.id 
-                      ? "bg-stone-100 text-stone-950 font-extrabold border-stone-100" 
-                      : theme === "brutalist"
-                        ? "bg-white border-stone-300 text-stone-600 hover:text-black hover:border-black"
-                        : "bg-black/40 border-stone-850 text-stone-500 hover:text-stone-200"
-                  }`}
-                >
-                  {t.label}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* STANDALONE IMMERSIVE COMMON CARD VIEWER */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-          className="w-full relative"
-        >
-          <GreetingCardViewer config={currentConfig} />
-        </motion.div>
-
-        {/* LOGISTICS & RSVP PANEL */}
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch mt-6">
-          
-          {/* VENUE SPECS */}
+      <AnimatePresence mode="wait">
+        {!isEnvelopeOpened ? (
+          /* --- STATE 1: ELEGANT ENVELOPE ENTRANCE --- */
           <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ 
-              y: -6, 
-              boxShadow: theme === "brutalist" 
-                ? "10px 10px 0px 0px rgba(0,0,0,1)" 
-                : theme === "acid"
-                  ? "0 15px 30px rgba(163,230,53,0.1)"
-                  : theme === "swiss"
-                    ? "0 15px 30px rgba(225,29,72,0.1)"
-                    : theme === "sunset"
-                      ? "0 15px 30px rgba(244,63,94,0.15)"
-                      : "0 15px 30px rgba(34,211,238,0.15)",
-              transition: { type: "spring", stiffness: 300, damping: 20 }
-            }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
-            className={`md:col-span-7 p-6 border flex flex-col justify-between gap-6 transition-colors duration-500 ${
-              theme === "brutalist" ? "bg-white border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] text-black" : "bg-stone-900/40 border-stone-900"
-            }`}
+            key="envelope-view"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05, y: -40 }}
+            transition={{ type: "spring", stiffness: 90, damping: 15 }}
+            className="flex-1 flex flex-col items-center justify-center min-h-[92vh] px-4 py-8 z-10"
+            id="picnic-sealed-envelope"
           >
-            <div>
-              <span className="text-[9px] font-mono uppercase tracking-widest opacity-50 block mb-2">Coordination specs // location</span>
-              <h3 className="text-lg font-bold uppercase tracking-wider mb-2">The Golden Lounge</h3>
-              <p className="text-xs leading-relaxed font-sans font-light opacity-80 mb-4">
-                Nathnael's celebration operations are located at the Neon Arcade Lounge (and Karaoke Center). 
-                Please keep coordinates stabilized. standard beverages (boba, fruit cocktails) are provided.
-              </p>
-            </div>
+            <div className="max-w-md w-full flex flex-col items-center text-center gap-6">
+              <span className={`text-[11px] font-mono tracking-[0.3em] font-medium uppercase px-3.5 py-1 rounded-full ${themeStyles.accentBg} ${themeStyles.accent}`}>
+                ✧ Secret Coordinate Invite ✧
+              </span>
 
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-t border-current/15 pt-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex items-center gap-2">
-                  <MapPin size={14} className={theme === "acid" ? "text-lime-400" : "text-rose-500"} />
-                  <span className="text-xs font-mono font-medium">Boba City Mall, Sector 4</span>
+              {/* Physical Envelope Card Mockup */}
+              <motion.div
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.02,
+                  boxShadow: theme === "brutalist" 
+                    ? "10px 10px 0px 0px rgba(0,0,0,1)" 
+                    : "0 25px 50px -12px rgba(124,149,228,0.22)" 
+                }}
+                transition={{ type: "spring", stiffness: 350, damping: 20 }}
+                className={`w-full aspect-[4/3] relative rounded-[24px] overflow-hidden p-8 flex flex-col justify-between border ${
+                  theme === "brutalist" ? "bg-white border-black text-black" : "bg-[#fcfbf9] border-[#e8dfcf]"
+                } shadow-[0_20px_40px_rgba(0,0,0,0.04)] cursor-pointer`}
+                onClick={handleOpenEnvelope}
+              >
+                {/* Triangular top fold simulation lines */}
+                <div className="absolute inset-x-0 top-0 h-1/2 border-b border-stone-200/50 bg-[#faf8f4] [clip-path:polygon(0_0,50%_75%,100%_0)] shadow-[0_3px_5px_rgba(0,0,0,0.01)]" />
+                <div className="absolute top-2 right-2 text-[#e6a5b8]/40"><Leaf size={45} className="rotate-45" /></div>
+
+                {/* To Name tag */}
+                <div className="mt-[20%] text-center relative z-10">
+                  <p className="font-cursive text-xl mb-1 text-stone-400">Especially For</p>
+                  <h2 className="font-serif text-3xl font-black text-stone-850 tracking-tight">Friends & Crew</h2>
+                  <div className="w-16 h-[2px] bg-[#7c95e4]/30 mx-auto mt-3" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className={theme === "acid" ? "text-lime-400" : "text-rose-500"} />
-                  <span className="text-xs font-mono font-medium">19:00 Hours Forward</span>
+
+                {/* Press-seal stamp indicator */}
+                <div className="flex justify-center items-center relative z-10">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                    className="w-14 h-14 rounded-full bg-[#fbf9f3] border-2 border-dashed border-[#90a98c] flex items-center justify-center text-rose-400 shadow-[0_4px_12px_rgba(144,169,140,0.1)]"
+                  >
+                    <Leaf size={22} className="text-[#90a98c]" />
+                  </motion.div>
                 </div>
+
+                <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-stone-400 mt-2">
+                  Click Envelope to Break Seal
+                </p>
+              </motion.div>
+
+              <div className="flex flex-col gap-2 mt-4 text-center">
+                <h3 className={`text-2xl font-serif text-[#3a4245] ${themeStyles.headingText}`}>Nati's 20th Birthday Picnic</h3>
+                <p className="text-xs text-stone-500 max-w-sm">
+                  Broken seals will unlock coordinates, interactive vibes menu list, and picnic guestboards. Created with care by Meba D. GOAT.
+                </p>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={downloadICSFile}
-                className={`flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-[10px] font-bold tracking-wider uppercase border transition-all cursor-pointer ${
-                  theme === "brutalist"
-                    ? "bg-black text-white border-black hover:bg-stone-900"
-                    : "bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20 text-stone-200"
-                }`}
-                title="Download standard iCalendar reference file for Google, Apple, or Outlook"
-                id="btn-sync-calendar"
-              >
-                <Calendar size={12} className={theme === "acid" ? "text-lime-400" : "text-rose-500"} />
-                Sync to Calendar
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* ACTIVE RSVP BOX */}
-          <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ 
-              y: -6, 
-              boxShadow: theme === "brutalist" 
-                ? "10px 10px 0px 0px rgba(0,0,0,1)" 
-                : theme === "acid"
-                  ? "0 15px 30px rgba(163,230,53,0.1)"
-                  : theme === "swiss"
-                    ? "0 15px 30px rgba(225,29,72,0.1)"
-                    : theme === "sunset"
-                      ? "0 15px 30px rgba(244,63,94,0.15)"
-                      : "0 15px 30px rgba(34,211,238,0.15)",
-              transition: { type: "spring", stiffness: 300, damping: 20 }
-            }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
-            className={`md:col-span-5 p-6 border flex flex-col justify-between items-center text-center gap-6 transition-colors duration-500 ${
-              theme === "brutalist" ? "bg-white border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] text-black" : "bg-stone-950/40 border-stone-900"
-            }`}
-          >
-            <div>
-              <span className="text-[9px] font-mono uppercase tracking-widest opacity-50 block mb-1">Confirm Presence</span>
-              <h3 className="text-lg font-bold uppercase tracking-wide">RSVP Registry</h3>
-              <p className="text-xs leading-relaxed font-sans font-light opacity-85 mt-2">
-                Are you joining Nathnael on Sunday, June 7th? Lock in your coordinates.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-3 w-full">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleRSVP}
-                className={`w-full py-3 px-6 text-xs text-center font-mono font-black uppercase tracking-widest transition-all cursor-pointer ${
-                  hasRSVPed
-                    ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                    : theme === "brutalist"
-                      ? "bg-black text-white hover:bg-stone-800"
-                      : theme === "acid"
-                        ? "bg-lime-400 text-black hover:bg-lime-300"
-                        : theme === "swiss"
-                          ? "bg-rose-600 text-white hover:bg-rose-500"
-                          : "bg-stone-100 text-stone-950 hover:bg-white"
-                }`}
-              >
-                {hasRSVPed ? "✓ Attending Confirmed" : "✦ RSVP Attendance ✦"}
-              </motion.button>
-
-              <div className="flex items-center gap-1.5 text-[10px] font-mono opacity-60">
-                <Heart size={10} className="text-rose-500 fill-rose-500" />
-                <span>{rsvpCount} friends confirmed so far</span>
+              {/* Theme Selector right on envelope landing page */}
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
+                {[
+                  { id: "swiss", label: "🌸 Periwinkle" },
+                  { id: "acid", label: "🌿 SageMeadow" },
+                  { id: "sunset", label: "🤍 PastelRose" },
+                  { id: "aurora", label: "✨ Twilight Star" },
+                  { id: "brutalist", label: "🔳 Paper" }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTheme(t.id as CardThemeType)}
+                    className={`text-[10px] uppercase font-mono tracking-wider px-2.5 py-1 border rounded-full transition-all cursor-pointer ${
+                      theme === t.id 
+                        ? `${themeStyles.accentBadge} font-bold border-transparent` 
+                        : "bg-white/60 border-stone-200 text-stone-600 hover:bg-white"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
             </div>
           </motion.div>
+        ) : (
+          /* --- STATE 2: FULLY UNLOCKED INTERACTIVE PORTAL --- */
+          <motion.div 
+            key="portal-view"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-grow flex flex-col z-10"
+            id="picnic-dashboard-portal"
+          >
+            {/* STICKY ACCENT HEADERS */}
+            <header className="sticky top-0 z-40 backdrop-blur-md bg-white/70 border-b border-stone-200/50 py-4 transition-colors duration-500">
+              <div className="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    whileHover={{ rotate: [0, -12, 12, 0] }}
+                    className="w-10 h-10 rounded-full bg-[#fbf9f3] border border-[#7c95e4]/30 shadow-sm flex items-center justify-center cursor-pointer"
+                    onClick={handleResetEnvelope}
+                    title="Return to envelope seal page"
+                  >
+                    <Mail size={16} className="text-[#7c95e4]" />
+                  </motion.div>
+                  <div>
+                    <h1 className={`text-lg font-serif tracking-tight font-black flex items-center gap-1.5 ${themeStyles.headingText}`}>
+                      🌿 Nati's Picnic Space <span className="text-xs font-cursive text-[#7c95e4]">20th Celebration</span>
+                    </h1>
+                    <p className="text-[9px] font-mono tracking-wider uppercase opacity-60">
+                      Coordinate terminal • Host: Meba D. GOAT
+                    </p>
+                  </div>
+                </div>
 
-        </div>
+                <div className="flex items-center gap-2">
+                  {/* Acoustic Theme play controller */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={toggleMusic}
+                    className="p-2 border border-stone-200/60 rounded-full bg-white/80 hover:bg-stone-50 transition-all flex items-center gap-1.5 text-xs text-stone-600"
+                    title="Toggle synthesized garden melodies"
+                  >
+                    {isPlayingMusic ? (
+                      <>
+                        <Volume2 size={13} className="text-[#e6a5b8] animate-pulse" />
+                        <span className="text-[10px] font-mono uppercase tracking-widest hidden sm:inline">Sound Active</span>
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX size={13} className="text-stone-400" />
+                        <span className="text-[10px] font-mono uppercase tracking-widest hidden sm:inline">Mute Sound</span>
+                      </>
+                    )}
+                  </motion.button>
 
-      </main>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[9px] font-bold tracking-widest uppercase bg-white border border-stone-200 hover:border-[#7c95e4]/50 shadow-sm transition-all text-stone-650"
+                  >
+                    <Share2 size={11} className="text-[#7c95e4]" />
+                    {copiedLink ? "Link Copied!" : "Share Invitation Link"}
+                  </motion.button>
+                </div>
+              </div>
+            </header>
 
-      <footer className="mt-16 text-center text-[10px] font-mono tracking-[0.25em] uppercase opacity-40 select-none pointer-events-none">
-        <p>© 2026 NATHNAEL MEMBERS_ONLY BASH // SECURITY COORDINATE SECURED</p>
-      </footer>
+            <main className="max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col gap-8 justify-start">
+              
+              {/* BRANDING HERO */}
+              <div className="text-center py-4 flex flex-col gap-3">
+                <p className="font-cursive text-2xl text-[#7c95e4] italic">You are invited to</p>
+                <h2 className="text-4xl sm:text-6xl font-black font-serif leading-none tracking-tight text-[#3a4245]">
+                  NATI,S Birthday <span className="text-[#90a98c] font-cursive italic font-light font-sans text-3xl sm:text-5xl block sm:inline">picnic</span>
+                </h2>
+                
+                <div className="flex justify-center mt-2.5">
+                  <div className={`border-2 border-stone-850 px-8 py-2.5 rounded-full font-serif text-base sm:text-lg font-bold bg-white tracking-widest ${themeStyles.cardShadow}`}>
+                    7 JUNE / 2026
+                  </div>
+                </div>
+              </div>
+
+              {/* NAVIGATION TABS ENGINE */}
+              <div className="flex justify-center overflow-x-auto pb-2 scrollbar-none" id="picnic-navigation-bar">
+                <nav className="flex gap-2 p-1.5 bg-white/60 backdrop-blur-sm border border-stone-200/50 rounded-full shadow-sm max-w-full">
+                  {[
+                    { id: "home", label: "Home 🌿" },
+                    { id: "details", label: "Details 📍" },
+                    { id: "vibes", label: "Vibes ✨" },
+                    { id: "gifts", label: "Gifts 🤍" },
+                    { id: "rsvp", label: "RSVP 💌" }
+                  ].map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id as any);
+                          playCozySpark();
+                        }}
+                        className={`px-4 sm:px-6 py-2 rounded-full font-sans text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                          isActive 
+                            ? `${themeStyles.buttonPrimary} font-bold text-white shadow-md` 
+                            : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* ACTIVE PAGE SWITCHER CONTAINER */}
+              <div className="relative" id="picnic-tab-panel">
+                <AnimatePresence mode="wait">
+                  {/* --- TAB 1: HOME PANEL --- */}
+                  {activeTab === "home" && (
+                    <motion.div
+                      key="home-panel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className={`glass-card rounded-[32px] border bg-white/80 p-6 sm:p-10 text-center flex flex-col gap-6 ${themeStyles.cardShadow}`}
+                    >
+                      <div className="text-[#90a98c] mx-auto opacity-70">
+                        <Leaf size={32} className="animate-bounce" />
+                      </div>
+                      <p className="font-sans font-light leading-relaxed text-sm sm:text-base max-w-xl mx-auto text-stone-600">
+                        Prepare yourself for Nati's spectacular 20th birthday picnic party, where we'll soak up the sun and enjoy great company. No credentials or login needed. Walk right into the meadow!
+                      </p>
+
+                      <div className="flex justify-center mt-2">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setActiveTab("rsvp");
+                            playCozySpark();
+                          }}
+                          className={`px-8 py-3.5 rounded-full font-serif font-bold text-sm tracking-wide transition-all cursor-pointer ${themeStyles.buttonPrimary}`}
+                        >
+                          RSVP Here 💌
+                        </motion.button>
+                      </div>
+
+                      {/* STATELY COUNTDOWN TIMER CARDS */}
+                      <div className="mt-8">
+                        <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-stone-400 mb-4">
+                          Countdown to Meadow Rendezvous
+                        </p>
+                        
+                        <div className="flex justify-center gap-2 sm:gap-4 max-w-md mx-auto">
+                          {[
+                            { value: timeLeft.days, label: "Days" },
+                            { value: timeLeft.hours, label: "Hrs" },
+                            { value: timeLeft.minutes, label: "Mins" },
+                            { value: timeLeft.seconds, label: "Secs" }
+                          ].map((b, i) => (
+                            <div key={i} className="flex-1 bg-white border border-stone-200/60 p-3 sm:p-4 rounded-2xl shadow-sm text-center">
+                              <span className="font-serif text-xl sm:text-3.5xl font-bold block text-[#7c95e4] leading-none mb-1">
+                                {String(b.value).padStart(2, '0')}
+                              </span>
+                              <span className="text-[9px] font-mono uppercase tracking-wider text-stone-400">
+                                {b.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {timeLeft.isPast && (
+                          <p className="text-sm font-cursive text-[#90a98c] mt-4 font-bold">
+                            It's Nati's Picnic Day! Let's get together! 🎉
+                          </p>
+                        )}
+                        
+                        <div className="flex justify-center items-center gap-1.5 mt-8 text-xs font-mono text-stone-400">
+                          <Heart size={12} className="text-rose-400 fill-rose-400" />
+                          <span>{totalAttending} friends confirmed attendance</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* --- TAB 2: DETAILS PANEL --- */}
+                  {activeTab === "details" && (
+                    <motion.div
+                      key="details-panel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className={`glass-card rounded-[32px] border bg-white/80 p-6 sm:p-10 ${themeStyles.cardShadow}`}
+                    >
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3a4245]">The Setup Info</h2>
+                        <p className="text-xs text-stone-400 mt-1 uppercase tracking-widest font-mono">When & Where we assemble</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
+                        {[
+                          { icon: <MapPin size={18} className="text-[#7c95e4]" />, title: "Location", desc: "To be determined, Addis Ababa" },
+                          { icon: <Calendar size={18} className="text-[#7c95e4]" />, title: "Date", desc: "Sunday, June 7, 2026" },
+                          { icon: <Clock size={18} className="text-[#7c95e4]" />, title: "Start Time", desc: "3:00 PM – Sunset" },
+                          { icon: <Gift size={18} className="text-[#7c95e4]" />, title: "Dress Code", desc: "Keep it cute & comfortable." }
+                        ].map((d, index) => (
+                          <div key={index} className="flex gap-4 items-start p-4 bg-white/90 border border-stone-150/50 rounded-2xl">
+                            <div className="p-3 bg-stone-50 border border-stone-100 rounded-full flex-shrink-0">
+                              {d.icon}
+                            </div>
+                            <div>
+                              <h4 className="font-serif font-bold text-[#3a4245] text-sm sm:text-base leading-tight">
+                                {d.title}
+                              </h4>
+                              <p className="text-xs sm:text-sm text-stone-500 mt-1">
+                                {d.desc}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Maps interactive card component mock */}
+                      <div className="mt-8 p-5 rounded-2xl border border-dashed border-[#7c95e4]/30 bg-[#fbf9f3]/40 text-center flex flex-col justify-center items-center gap-3">
+                        <MapPin size={24} className="text-[#7c95e4]" />
+                        <h4 className="font-serif font-bold text-[#3a4245] text-sm">Interactive GPS drop placement</h4>
+                        <p className="text-xs text-stone-500 max-w-sm">
+                          Standard exact coordinates will map out pin location in the meadow shortly before setup start.
+                        </p>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={downloadICSFile}
+                          className="px-4 py-2 mt-1 rounded-full text-[10px] font-mono uppercase font-bold tracking-wider border border-stone-200 hover:border-[#7c95e4]/40 bg-white transition-all inline-flex items-center gap-1.5"
+                        >
+                          <Calendar size={11} className="text-[#7c95e4]" />
+                          Sync standard Calendar File (.ics)
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* --- TAB 3: VIBES MENU & ACTIVITIES --- */}
+                  {activeTab === "vibes" && (
+                    <motion.div
+                      key="vibes-panel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className={`glass-card rounded-[32px] border bg-white/80 p-6 sm:p-10 ${themeStyles.cardShadow}`}
+                    >
+                      <div className="text-center mb-6">
+                        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3a4245]">What's on the Menu</h2>
+                        <p className="text-xs text-stone-400 mt-1 uppercase tracking-widest font-mono">Tasty picnic nibbles & refreshments</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                        {[
+                          { emoji: "🍩", label: "Cupcakes & Cookies" },
+                          { emoji: "🍓", label: "Fresh Fruits" },
+                          { emoji: "🥤", label: "Refreshing Drinks" },
+                          { emoji: "🎶", label: "Sunset Tunes" }
+                        ].map((item, index) => (
+                          <motion.div 
+                            key={index}
+                            whileHover={{ y: -4, borderColor: "#7c95e4" }}
+                            className="bg-white border border-stone-200/50 p-4 rounded-2xl text-center flex flex-col items-center gap-2 card-emoji-item"
+                          >
+                            <span className="text-2.5xl block">{item.emoji}</span>
+                            <p className="text-xs font-semibold text-stone-600 font-sans">{item.label}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      <div className="text-center mb-6 mt-8">
+                        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3a4245]">The Activities</h2>
+                        <p className="text-xs text-stone-400 mt-1 cursor-crosshair uppercase tracking-widest font-mono">Unwinding and playing game loops together</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {[
+                          { emoji: "🃏", label: "Uno / Cards" },
+                          { emoji: "🤫", label: "Mafia" },
+                          { emoji: "🎵", label: "Music Games" },
+                          { emoji: "📸", label: "Photo Moments" }
+                        ].map((item, index) => (
+                          <motion.div 
+                            key={index}
+                            whileHover={{ y: -4, borderColor: "#90a98c" }}
+                            className="bg-white border border-stone-200/50 p-4 rounded-2xl text-center flex flex-col items-center gap-2 card-emoji-item"
+                          >
+                            <span className="text-2.5xl block">{item.emoji}</span>
+                            <p className="text-xs font-semibold text-stone-600 font-sans">{item.label}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* RETRO PICNIC SYNTHESIZER TO PLAY MELODIC SOUNDS ACTIVE */}
+                      <div className="mt-10 border-t border-stone-200/50 pt-8" id="backyard-acoustic-synth">
+                        <div className="text-center mb-4">
+                          <h4 className="font-serif font-bold text-[#3a4245] text-sm">🎹 Meadow Interactive Retro Synthesizer 🎹</h4>
+                          <p className="text-xs text-stone-400 max-w-md mx-auto mt-1">
+                            Click any button to trigger live synthesized rustic sounds via the Web Audio API synthesizer.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-2 max-w-md mx-auto">
+                          {[
+                            { label: "🐦 Nature Chime", id: "bird" },
+                            { label: "🔥 Cozy Spark", id: "spark" },
+                            { label: "🍃 Synther Breeze", id: "breeze" },
+                            { label: "🎉 Popper Burst", id: "bubble" }
+                          ].map((b) => (
+                            <button
+                              key={b.id}
+                              onClick={() => {
+                                playSynthesizedTone(b.id as any);
+                              }}
+                              className="px-3.5 py-1.5 bg-stone-50 duration-200 hover:bg-[#7c95e4]/10 hover:text-[#7c95e4] active:scale-95 border border-stone-150 rounded-xl text-xs font-mono select-none"
+                            >
+                              {b.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                    </motion.div>
+                  )}
+
+                  {/* --- TAB 4: GIFTS IDEAS --- */}
+                  {activeTab === "gifts" && (
+                    <motion.div
+                      key="gifts-panel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className={`glass-card rounded-[32px] border bg-white/80 p-6 sm:p-10 ${themeStyles.cardShadow}`}
+                    >
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3a4245]">Small Note 🤍</h2>
+                        <p className="text-xs text-stone-400 mt-1 uppercase tracking-widest font-mono">Thoughtful Birthday gesture hints</p>
+                      </div>
+
+                      <div className="max-w-md mx-auto text-left flex flex-col gap-4">
+                        <p className="text-sm font-sans text-stone-600 mb-2 font-medium">
+                          Want to bring Nati something special for his 20th? Here are some simple ideas to help you:
+                        </p>
+                        
+                        <div className="flex flex-col gap-3">
+                          {[
+                            "Snacks or drinks we can consume and enjoy at the park",
+                            "Something sweet, meaningful, or anime-related",
+                            "Small fashion accessories especially watches or personal keepsakes"
+                          ].map((idea, idx) => (
+                            <div key={idx} className="flex gap-3 items-center">
+                              <span className="text-[#e6a5b8]">🌸</span>
+                              <p className="text-xs sm:text-sm text-stone-600 font-sans font-normal leading-relaxed">{idea}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="border-t border-stone-150/55 pt-6 mt-4 text-center">
+                          <span className="font-cursive text-2.5xl text-[#7c95e4] block">
+                            Your presence occupies the real gift (not really),
+                          </span>
+                          <span className="font-cursive text-2.5xl text-[#7c95e4] block mt-1">
+                            so this is totally optional (not really) 🤍
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* --- TAB 5: RSVP FORM & GUESTBOOK REGISTRY --- */}
+                  {activeTab === "rsvp" && (
+                    <motion.div
+                      key="rsvp-panel"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col gap-6"
+                    >
+                      <div className={`glass-card rounded-[32px] border bg-white/90 p-6 sm:p-10 ${themeStyles.cardShadow}`}>
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#3a4245]">RSVP Registry</h2>
+                          <p className="text-xs text-stone-400 mt-1 uppercase tracking-widest font-mono">Let us know if you can make it out to the meadow!</p>
+                        </div>
+
+                        <form onSubmit={handleFormSubmit} className="max-w-md mx-auto flex flex-col gap-4 text-left">
+                          <div>
+                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Your Name *</label>
+                            <input
+                              type="text"
+                              required
+                              value={formName}
+                              onChange={(e) => setFormName(e.target.value)}
+                              placeholder="Enter your name"
+                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Will you be attending?</label>
+                            <div className="grid grid-cols-2 gap-3 mt-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => { setFormAttending(true); playCozySpark(); }}
+                                className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
+                                  formAttending 
+                                    ? "bg-[#7c95e4] text-white border-transparent" 
+                                    : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
+                                }`}
+                              >
+                                Count me in! 🎉
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setFormAttending(false); playCozySpark(); }}
+                                className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
+                                  !formAttending 
+                                    ? "bg-rose-500 text-white border-transparent" 
+                                    : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
+                                }`}
+                              >
+                                Can't make it 😢
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Song Request 🎶</label>
+                            <input
+                              type="text"
+                              value={formSong}
+                              onChange={(e) => setFormSong(e.target.value)}
+                              placeholder="tunes u wanna hear."
+                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Message or Dietary Remarks 🤍</label>
+                            <textarea
+                              value={formNote}
+                              onChange={(e) => setFormNote(e.target.value)}
+                              placeholder="Leave a sweet note for Nati's birthday picnic..."
+                              rows={3}
+                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm resize-none"
+                            />
+                          </div>
+
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            type="submit"
+                            className={`w-full py-4 rounded-xl text-xs font-semibold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${themeStyles.buttonPrimary}`}
+                          >
+                            Send RSVP 💌
+                          </motion.button>
+                        </form>
+                      </div>
+
+                      {/* COLLABORATIVE SURPRISE MEADOW GUESTBOARD FOR THE CREW */}
+                      <div className={`glass-card rounded-[32px] border bg-white/90 p-6 sm:p-10 text-left ${themeStyles.cardShadow}`}>
+                        <div className="flex items-center justify-between mb-4 border-b border-stone-100 pb-4">
+                          <div className="flex items-center gap-2">
+                            <Heart size={16} className="text-rose-400 fill-rose-400" />
+                            <h3 className="font-serif font-black text-[#3a4245] text-lg">Meadow Guestboard</h3>
+                          </div>
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400">
+                            {totalAttending} RSVPs Confirmed
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-1">
+                          {rsvpList.map((guest, i) => (
+                            <div key={i} className="p-4 bg-stone-50/60 border border-stone-100 rounded-2xl flex flex-col gap-2">
+                              <div className="flex items-center justify-between gap-2.5">
+                                <span className="font-serif font-black text-sm text-[#3a4245]">
+                                  {guest.name}
+                                </span>
+                                <span className={`text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                  guest.attending ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-750"
+                                }`}>
+                                  {guest.attending ? "✓ Attending" : "Can't Attend"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-stone-500 italic">
+                                "{guest.note}"
+                              </p>
+                              <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-stone-100 text-[10px] text-stone-400 font-mono">
+                                <span>Requested tune: <strong className="text-stone-500">{guest.song}</strong></span>
+                                <span>{guest.date}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+            </main>
+
+            {/* DESIGN SWITCHER PANEL IN BANNER */}
+            <div className="max-w-2xl mx-auto w-full px-6 text-center mt-10">
+              <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-stone-450 block mb-2">
+                Toggle Poster Aesthetic Theme
+              </span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {[
+                  { id: "swiss", label: "🌸 Periwinkle" },
+                  { id: "acid", label: "🌿 Sage Meadow" },
+                  { id: "sunset", label: "🤍 Blossom Rose" },
+                  { id: "aurora", label: "✨ Twilight Star" },
+                  { id: "brutalist", label: "🔳 Paper" }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setTheme(t.id as CardThemeType); playCozySpark(); }}
+                    className={`px-3 py-1.5 font-mono uppercase text-[9px] tracking-wider border rounded-full transition-all cursor-pointer ${
+                      theme === t.id 
+                        ? `${themeStyles.accentBadge} font-extrabold border-transparent` 
+                        : "bg-white border-stone-200 text-stone-500 hover:bg-stone-50"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <footer className="mt-16 text-center text-xs text-stone-450 select-none flex flex-col gap-1 tracking-wide">
+              <p>please keep this hangout private 😌✨</p>
+              <p className="font-medium text-stone-500">dress cute, arrive on time, & let's celebrate Nati 🤍</p>
+            </footer>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

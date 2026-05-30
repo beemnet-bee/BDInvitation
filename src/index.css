@@ -1,8 +1,62 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,100..850;1,100..850&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:ital,wght@0,100..850;1,100..850&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-cursive: "Caveat", cursive;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
+
+/* Custom Styled Scrollbars synchronized with current active theme context */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.theme-swiss::-webkit-scrollbar-thumb {
+  background-color: rgba(225, 29, 72, 0.25);
+}
+.theme-swiss::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(225, 29, 72, 0.55);
+}
+
+.theme-acid::-webkit-scrollbar-thumb {
+  background-color: rgba(163, 230, 53, 0.3);
+}
+.theme-acid::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(163, 230, 53, 0.6);
+}
+
+.theme-brutalist::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+.theme-brutalist::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.theme-sunset::-webkit-scrollbar-thumb {
+  background-color: rgba(244, 63, 94, 0.25);
+}
+.theme-sunset::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(244, 63, 94, 0.55);
+}
+
+.theme-aurora::-webkit-scrollbar-thumb {
+  background-color: rgba(34, 211, 238, 0.25);
+}
+.theme-aurora::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(34, 211, 238, 0.55);
+}
+
