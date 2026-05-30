@@ -148,15 +148,29 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <motion.div 
-              whileHover={{ rotate: 15, scale: 1.1 }}
-              className={`w-8 h-8 rounded-none border-2 flex items-center justify-center transition-all ${
-                theme === "brutalist" ? "border-black" :
-                theme === "swiss" ? "border-rose-500" :
-                theme === "acid" ? "border-lime-400" :
-                theme === "sunset" ? "border-amber-400" : "border-cyan-400"
-              }`}
+              whileHover={{ rotate: [0, -10, 10, 0], scale: 1.12 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="relative w-10 h-10 flex items-center justify-center select-none"
             >
-              <span className="text-xs font-mono font-bold">07</span>
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect 
+                  x="6" y="6" width="88" height="88" rx="14" 
+                  stroke="currentColor" 
+                  strokeWidth="5" 
+                  className={`transition-all duration-500 ${
+                    theme === "brutalist" ? "text-black fill-stone-100" :
+                    theme === "swiss" ? "text-rose-500 fill-rose-950/10" :
+                    theme === "acid" ? "text-lime-400 fill-lime-950/25" :
+                    theme === "sunset" ? "text-amber-500 fill-amber-950/15" : "text-cyan-400 fill-cyan-950/15"
+                  }`}
+                />
+                <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="2.5" strokeDasharray="6 4" className="opacity-70 text-current transition-colors duration-500" />
+                <path d="M50 16 L50 84 M16 50 L84 50" stroke="currentColor" strokeWidth="1.5" className="opacity-40 text-current transition-colors duration-500" />
+                <circle cx="50" cy="50" r="6" fill="currentColor" className="text-rose-500 transition-colors duration-500" />
+              </svg>
+              <span className={`text-[10px] font-mono font-black z-10 tracking-tighter ${
+                theme === "brutalist" ? "text-black" : "text-white"
+              }`}>07</span>
             </motion.div>
             <div>
               <h1 className="text-base font-black tracking-widest uppercase flex items-center gap-2">
