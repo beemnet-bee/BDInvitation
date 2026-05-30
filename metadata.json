@@ -1,0 +1,8 @@
+{
+  "name": "Birthday Card Creator",
+  "description": "Create, customize, and share animated birthday greeting cards with immersive multi-level animations, interactive balloon popping, blowing out cake candles, and an AI-powered greeting assistant for the June 7th celebration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
