@@ -131,7 +131,7 @@ export default function GreetingCardViewer({ config, onBack }: GreetingCardViewe
   // Initialize interactive modernist shapes
   useEffect(() => {
     if (cardState === "opened") {
-      const words = ["JOY ✦", "WISH ✧", "ALEX ★", "JUNE 7", "MUSIC 🎵", "DRINK 🍸", "DANCE 🕺", "FUTURE 🚀"];
+      const words = ["JOY ✦", "WISH ✧", "NATHNAEL ★", "JUNE 7", "MUSIC 🎵", "DRINK 🍸", "DANCE 🕺", "FUTURE 🚀"];
       const shapeTypes: ("circle" | "square" | "triangle" | "cross")[] = ["circle", "square", "triangle", "cross"];
       
       const newShapes = Array.from({ length: 12 }).map((_, i) => ({
@@ -761,7 +761,7 @@ export default function GreetingCardViewer({ config, onBack }: GreetingCardViewe
 
       {/* Avant-garde coordinate marks in footer */}
       <div className="text-[9px] font-mono opacity-50 mt-6 pt-4 border-t border-inherit flex flex-col sm:flex-row justify-between items-center gap-2 select-none pointer-events-none uppercase">
-        <span>Coordinate frame: 45°N 76°W // ALEX_PARTY_SHUTTLE</span>
+        <span>Coordinate frame: 45°N 76°W // NATHNAEL_PARTY_SHUTTLE</span>
         <span>Secured system channel June 7th 2026</span>
       </div>
 

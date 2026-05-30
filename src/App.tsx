@@ -8,7 +8,7 @@ import { CardConfig, CardThemeType } from "./types";
 import GreetingCardViewer from "./components/GreetingCardViewer";
 
 // Pristine Common Invitation Message for everyone
-const INVITATION_MESSAGE = `✦ ALEX // JUNE 7 BASH COORDINATES ✦
+const INVITATION_MESSAGE = `✦ NATHNAEL AYZOHIBEL // JUNE 7 BASH COORDINATES ✦
 
 Date: Sunday, June 7th, 2026
 Location: The Neon Lounge // Latitude 45°N 76°W
@@ -21,15 +21,15 @@ Extinguish your firewalls and synchronize. See you at the coordinates."`;
 export default function App() {
   const [theme, setTheme] = useState<CardThemeType>("swiss");
   const [hasRSVPed, setHasRSVPed] = useState<boolean>(() => {
-    return localStorage.getItem("alex_bash_rsvp") === "true";
+    return localStorage.getItem("nathnael_bash_rsvp") === "true";
   });
   const [copiedLink, setCopiedLink] = useState(false);
   const [rsvpCount, setRsvpCount] = useState<number>(() => {
     // Generate a beautiful consistent number of confirmed friends
-    const savedCount = localStorage.getItem("alex_bash_rsvp_count");
+    const savedCount = localStorage.getItem("nathnael_bash_rsvp_count");
     if (savedCount) return parseInt(savedCount, 10);
     const initial = 14 + Math.floor(Math.random() * 8);
-    localStorage.setItem("alex_bash_rsvp_count", initial.toString());
+    localStorage.setItem("nathnael_bash_rsvp_count", initial.toString());
     return initial;
   });
 
@@ -46,13 +46,13 @@ export default function App() {
     if (!hasRSVPed) {
       setHasRSVPed(true);
       setRsvpCount(prev => prev + 1);
-      localStorage.setItem("alex_bash_rsvp", "true");
-      localStorage.setItem("alex_bash_rsvp_count", (rsvpCount + 1).toString());
+      localStorage.setItem("nathnael_bash_rsvp", "true");
+      localStorage.setItem("nathnael_bash_rsvp_count", (rsvpCount + 1).toString());
     } else {
       setHasRSVPed(false);
       setRsvpCount(prev => prev - 1);
-      localStorage.setItem("alex_bash_rsvp", "false");
-      localStorage.setItem("alex_bash_rsvp_count", (rsvpCount - 1).toString());
+      localStorage.setItem("nathnael_bash_rsvp", "false");
+      localStorage.setItem("nathnael_bash_rsvp_count", (rsvpCount - 1).toString());
     }
   };
 
@@ -68,15 +68,15 @@ export default function App() {
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Alex June 7th Celebration//EN",
+      "PRODID:-//Nathnael June 7th Celebration//EN",
       "CALSCALE:GREGORIAN",
       "METHOD:PUBLISH",
       "BEGIN:VEVENT",
-      "UID:alex-celebration-bash-2026@june7",
+      "UID:nathnael-celebration-bash-2026@june7",
       "DTSTAMP:20260529T164900Z",
       "DTSTART:20260607T190000",
       "DTEND:20260608T020000",
-      "SUMMARY:Alex's June 7th Celebration! 🎈",
+      "SUMMARY:Nathnael's June 7th Celebration! ✦",
       "DESCRIPTION:You are cordially invited to celebrate the successful compilation of another milestone orbit! Plan for extreme throughput of delicious pastries\\, intensive karaoke\\, and retro chiptune synthesizers.",
       "LOCATION:The Neon Lounge\\, Boba City Mall\\, Sector 4",
       "STATUS:CONFIRMED",
@@ -89,16 +89,16 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "alex_june_7_celebration.ics");
+    link.setAttribute("download", "nathnael_june_7_celebration.ics");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const currentConfig: CardConfig = {
-    id: "alex-common-invitation",
-    senderName: "Alex & Crew",
-    recipientName: "Every Adventurer",
+    id: "nathnael-common-invitation",
+    senderName: "Friends & Crew",
+    recipientName: "Nathnael Ayzohibel",
     birthdayDate: "June 7",
     theme,
     message: INVITATION_MESSAGE,
@@ -167,7 +167,7 @@ export default function App() {
                   theme === "sunset" ? "border-rose-500/30 text-rose-400" : "border-cyan-500/30 text-cyan-400"
                 }`}>Invitation Terminal</span>
               </h1>
-              <p className="text-[9px] font-mono opacity-60 tracking-wider">Common Interactive Portal • Alex's Milestone Celebration</p>
+              <p className="text-[9px] font-mono opacity-60 tracking-wider">Common Interactive Portal • Nathnael's Milestone Celebration</p>
             </div>
           </div>
 
@@ -217,7 +217,7 @@ export default function App() {
           <p className={`text-xs md:text-sm font-sans font-light leading-relaxed max-w-xl mx-auto ${
             theme === "brutalist" ? "text-stone-700" : "text-stone-300"
           }`}>
-            We are gathering on Sunday, June 7th to honor Alex. No signup or credentials needed. 
+            We are gathering on Sunday, June 7th to honor Nathnael Ayzohibel. No signup or credentials needed. 
             Open the envelope below to interact with the soundboard, extinguish the flame, and tap moving vectors to rack up points!
           </p>
         </motion.div>
@@ -302,7 +302,7 @@ export default function App() {
               <span className="text-[9px] font-mono uppercase tracking-widest opacity-50 block mb-2">Coordination specs // location</span>
               <h3 className="text-lg font-bold uppercase tracking-wider mb-2">The Golden Lounge</h3>
               <p className="text-xs leading-relaxed font-sans font-light opacity-80 mb-4">
-                Alex's celebration operations are located at the Neon Arcade Lounge (and Karaoke Center). 
+                Nathnael's celebration operations are located at the Neon Arcade Lounge (and Karaoke Center). 
                 Please keep coordinates stabilized. standard beverages (boba, fruit cocktails) are provided.
               </p>
             </div>
@@ -363,7 +363,7 @@ export default function App() {
               <span className="text-[9px] font-mono uppercase tracking-widest opacity-50 block mb-1">Confirm Presence</span>
               <h3 className="text-lg font-bold uppercase tracking-wide">RSVP Registry</h3>
               <p className="text-xs leading-relaxed font-sans font-light opacity-85 mt-2">
-                Are you joining Alex on Sunday, June 7th? Lock in your coordinates.
+                Are you joining Nathnael on Sunday, June 7th? Lock in your coordinates.
               </p>
             </div>
 
@@ -399,7 +399,7 @@ export default function App() {
       </main>
 
       <footer className="mt-16 text-center text-[10px] font-mono tracking-[0.25em] uppercase opacity-40 select-none pointer-events-none">
-        <p>© 2026 ALEX MEMBERS_ONLY BASH // SECURITY COORDINATE SECURED</p>
+        <p>© 2026 NATHNAEL MEMBERS_ONLY BASH // SECURITY COORDINATE SECURED</p>
       </footer>
 
     </div>
