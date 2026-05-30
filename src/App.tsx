@@ -35,6 +35,8 @@ export default function App() {
   const [formNote, setFormNote] = useState("");
 
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
+  const [lastSubmittedGuest, setLastSubmittedGuest] = useState<any>(null);
 
   // Fetch alive RSVPs on load
   useEffect(() => {
@@ -189,10 +191,12 @@ export default function App() {
     setFormSong("");
     setFormNote("");
 
+    // Save submission facts
+    setLastSubmittedGuest(payload);
+    setSubmissionSuccess(true);
+
     // Fancy celebration visual sound cues
     playCelebrationBurst();
-
-    alert(`Surprise RSVP processed successfully for ${payload.name}! It has been saved securely to the live registry guestlist. 🎉 🤍`);
   };
 
   const downloadICSFile = () => {
@@ -352,45 +356,83 @@ export default function App() {
                 ✧ Secret Coordinate Invite ✧
               </span>
 
-              {/* Physical Envelope Card Mockup */}
+              {/* Extraordinary Interactive 3D/Tactile Slide Envelope */}
               <motion.div
-                whileHover={{ 
-                  y: -8, 
-                  scale: 1.02,
-                  boxShadow: theme === "brutalist" 
-                    ? "10px 10px 0px 0px rgba(0,0,0,1)" 
-                    : "0 25px 50px -12px rgba(124,149,228,0.22)" 
-                }}
-                transition={{ type: "spring", stiffness: 350, damping: 20 }}
-                className={`w-full aspect-[4/3] relative rounded-[24px] overflow-hidden p-8 flex flex-col justify-between border ${
-                  theme === "brutalist" ? "bg-white border-black text-black" : "bg-[#fcfbf9] border-[#e8dfcf]"
-                } shadow-[0_20px_40px_rgba(0,0,0,0.04)] cursor-pointer`}
+                whileHover="hover"
+                initial="idle"
+                animate="idle"
+                className="w-full aspect-[4/3] relative rounded-[32px] overflow-hidden p-8 flex flex-col justify-between cursor-pointer focus:outline-none select-none"
                 onClick={handleOpenEnvelope}
+                style={{
+                  perspective: 1000
+                }}
               >
-                {/* Triangular top fold simulation lines */}
-                <div className="absolute inset-x-0 top-0 h-1/2 border-b border-stone-200/50 bg-[#faf8f4] [clip-path:polygon(0_0,50%_75%,100%_0)] shadow-[0_3px_5px_rgba(0,0,0,0.01)]" />
-                <div className="absolute top-2 right-2 text-[#e6a5b8]/40"><Leaf size={45} className="rotate-45" /></div>
+                {/* Envelope Base and Back Plate */}
+                <div className={`absolute inset-0 rounded-[32px] transition-colors duration-500 border ${
+                  theme === "brutalist" 
+                    ? "bg-white border-black text-black" 
+                    : "bg-[#f5ebd6] border-[#decba4]"
+                } shadow-sm -z-20`} />
 
-                {/* To Name tag */}
-                <div className="mt-[20%] text-center relative z-10">
-                  <p className="font-cursive text-xl mb-1 text-stone-400">Especially For</p>
-                  <h2 className="font-serif text-3xl font-black text-stone-850 tracking-tight">Friends & Crew</h2>
-                  <div className="w-16 h-[2px] bg-[#7c95e4]/30 mx-auto mt-3" />
+                {/* Tactical Peeking Invite Letter that glides UP on hover */}
+                <motion.div
+                  variants={{
+                    hover: { y: -42, rotate: -1.5, scale: 1.03 },
+                    idle: { y: 0, rotate: 0, scale: 1 }
+                  }}
+                  transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                  className="absolute inset-x-6 top-10 bottom-6 bg-white rounded-2xl border border-stone-200/90 p-5 flex flex-col justify-between -z-10 shadow-[0_8px_16px_rgba(0,0,0,0.03)] text-left"
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="text-[8px] font-mono uppercase tracking-widest text-stone-400">Meadow Registry • Class 2026</span>
+                    <Sparkles size={11} className={`${themeStyles.accent} animate-pulse`} />
+                  </div>
+                  
+                  <div className="my-auto py-1">
+                    <div className="font-cursive text-sm text-[#e6a5b8] mb-0.5">Let's Celebrate</div>
+                    <h4 className="font-serif font-black text-[#3a4245] text-lg leading-none tracking-tight">NATI IS TURNING 20</h4>
+                    <p className="text-[9px] font-mono text-stone-450 mt-1 uppercase tracking-wider">🌿 June 7, Addis Ababa 🌿</p>
+                  </div>
+
+                  <div className="border-t border-dashed border-stone-150 pt-2 flex justify-between items-center text-[9px] text-stone-400 font-mono uppercase tracking-wider">
+                    <span>Unlock Portal</span>
+                    <span className="text-[#7c95e4] animate-bounce">▲</span>
+                  </div>
+                </motion.div>
+
+                {/* Envelope Front Left & Right pocket fold mockups */}
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[#fdfaf5] border-t border-stone-200/50 rounded-b-[32px] -z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.01)] [clip-path:polygon(0_100%,0_0,50%_45%,100%_0%,100%_100%)]" />
+
+                {/* Triangular top fold flap cutout */}
+                <motion.div 
+                  variants={{
+                    hover: { rotateX: 30, y: -5, originY: 0 },
+                    idle: { rotateX: 0, y: 0, originY: 0 }
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute inset-x-0 top-0 h-1/2 border-b border-stone-200/40 bg-[#faf6ee] rounded-t-[32px] -z-10 shadow-[0_4px_8px_rgba(0,0,0,0.02)] [clip-path:polygon(0_0,50%_75%,100%_0)]" 
+                />
+
+                {/* Especially For Tag on Front Cover */}
+                <div className="text-center mt-[12%] z-20 pointer-events-none select-none">
+                  <p className="font-cursive text-lg text-amber-900/40">Open Invitation</p>
+                  <h2 className="font-serif text-2xl font-black text-stone-850 tracking-tight leading-none mt-1">Friends & Crew</h2>
+                  <div className="w-10 h-[1.5px] bg-[#7c95e4]/30 mx-auto mt-2.5" />
                 </div>
 
-                {/* Press-seal stamp indicator */}
-                <div className="flex justify-center items-center relative z-10">
+                {/* Wax Stamp Seal Trigger */}
+                <div className="flex justify-center items-center z-20">
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                    className="w-14 h-14 rounded-full bg-[#fbf9f3] border-2 border-dashed border-[#90a98c] flex items-center justify-center text-rose-400 shadow-[0_4px_12px_rgba(144,169,140,0.1)]"
+                    className="w-14 h-14 rounded-full bg-[#faf6ee] border-2 border-dashed border-[#90a98c] flex items-center justify-center text-rose-400 shadow-[0_4px_12px_rgba(144,169,140,0.12)] group-hover:scale-105 transition-transform"
                   >
-                    <Leaf size={22} className="text-[#90a98c]" />
+                    <Leaf size={22} className="text-[#90a98c] group-hover:rotate-12 transition-transform" />
                   </motion.div>
                 </div>
 
-                <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-stone-400 mt-2">
-                  Click Envelope to Break Seal
+                <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-900/50 mt-1 z-20">
+                  Click to Break Seal & Open
                 </p>
               </motion.div>
 
@@ -456,36 +498,57 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Acoustic Theme play controller */}
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={toggleMusic}
-                    className="p-2 border border-stone-200/60 rounded-full bg-white/80 hover:bg-stone-50 transition-all flex items-center gap-1.5 text-xs text-stone-600"
-                    title="Toggle synthesized garden melodies"
-                  >
-                    {isPlayingMusic ? (
-                      <>
-                        <Volume2 size={13} className="text-[#e6a5b8] animate-pulse" />
-                        <span className="text-[10px] font-mono uppercase tracking-widest hidden sm:inline">Sound Active</span>
-                      </>
-                    ) : (
-                      <>
-                        <VolumeX size={13} className="text-stone-400" />
-                        <span className="text-[10px] font-mono uppercase tracking-widest hidden sm:inline">Mute Sound</span>
-                      </>
+                <div className="flex items-center gap-2.5">
+                  {/* Acoustic Theme play controller with real-time CSS equalizer */}
+                  <div className="flex items-center gap-1.5 p-1 border border-stone-200/50 rounded-full bg-white/95 shadow-sm shrink-0">
+                    {isPlayingMusic && (
+                      <div className="flex gap-0.5 items-end px-2.5 h-3">
+                        {[0.6, 0.4, 0.9, 0.5, 0.7, 0.3, 0.8].map((speed, key) => (
+                          <motion.span
+                            key={key}
+                            animate={{
+                              height: ["3px", "13px", "3px"]
+                            }}
+                            transition={{
+                              duration: speed + 0.3,
+                              repeat: Infinity,
+                              ease: "easeInOut"
+                            }}
+                            className="w-0.5 bg-[#e6a5b8]"
+                            style={{ borderRadius: "1px" }}
+                          />
+                        ))}
+                      </div>
                     )}
-                  </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={toggleMusic}
+                      className="py-1 px-3 rounded-full transition-all flex items-center gap-1.5 text-stone-600 font-mono text-[9px] uppercase tracking-widest bg-white border border-stone-150/80 hover:bg-stone-50/50 cursor-pointer"
+                      title="Toggle synthesized garden melodies"
+                    >
+                      {isPlayingMusic ? (
+                        <>
+                          <Volume2 size={11} className="text-[#e6a5b8]" />
+                          <span className="hidden sm:inline">Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <VolumeX size={11} className="text-stone-400" />
+                          <span className="hidden sm:inline">Mute</span>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
 
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleCopyLink}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[9px] font-bold tracking-widest uppercase bg-white border border-stone-200 hover:border-[#7c95e4]/50 shadow-sm transition-all text-stone-650"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[9px] font-bold tracking-widest uppercase bg-white border border-stone-200 hover:border-[#7c95e4]/50 shadow-sm transition-all text-stone-650 cursor-pointer"
                   >
                     <Share2 size={11} className="text-[#7c95e4]" />
-                    {copiedLink ? "Link Copied!" : "Share Invitation Link"}
+                    {copiedLink ? "Copied!" : "Share Link"}
                   </motion.button>
                 </div>
               </div>
@@ -525,13 +588,25 @@ export default function App() {
                           setActiveTab(tab.id as any);
                           playCozySpark();
                         }}
-                        className={`px-4 sm:px-6 py-2 rounded-full font-sans text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                        className={`relative px-4 sm:px-6 py-2 rounded-full font-sans text-xs sm:text-sm font-medium whitespace-nowrap transition-colors duration-350 cursor-pointer focus:outline-none ${
                           isActive 
-                            ? `${themeStyles.buttonPrimary} font-bold text-white shadow-md` 
-                            : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                            ? "text-white font-black" 
+                            : "text-stone-600 hover:text-stone-850"
                         }`}
                       >
-                        {tab.label}
+                        {isActive && (
+                          <motion.div
+                            layoutId="slidingTabIndicator"
+                            className={`absolute inset-0 -z-10 rounded-full shadow-sm ${
+                              theme === "swiss" ? "bg-[#7c95e4]" :
+                              theme === "acid" ? "bg-[#90a98c]" :
+                              theme === "sunset" ? "bg-[#e6a5b8]" :
+                              theme === "aurora" ? "bg-[#9eb1f0]" : "bg-stone-950"
+                            }`}
+                            transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                          />
+                        )}
+                        <span className="relative z-10">{tab.label}</span>
                       </button>
                     );
                   })}
@@ -648,22 +723,81 @@ export default function App() {
                         ))}
                       </div>
 
-                      {/* Maps interactive card component mock */}
-                      <div className="mt-8 p-5 rounded-2xl border border-dashed border-[#7c95e4]/30 bg-[#fbf9f3]/40 text-center flex flex-col justify-center items-center gap-3">
-                        <MapPin size={24} className="text-[#7c95e4]" />
-                        <h4 className="font-serif font-bold text-[#3a4245] text-sm">Interactive GPS drop placement</h4>
-                        <p className="text-xs text-stone-500 max-w-sm">
-                          Standard exact coordinates will map out pin location in the meadow shortly before setup start.
-                        </p>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={downloadICSFile}
-                          className="px-4 py-2 mt-1 rounded-full text-[10px] font-mono uppercase font-bold tracking-wider border border-stone-200 hover:border-[#7c95e4]/40 bg-white transition-all inline-flex items-center gap-1.5"
-                        >
-                          <Calendar size={11} className="text-[#7c95e4]" />
-                          Sync standard Calendar File (.ics)
-                        </motion.button>
+                      {/* Extraordinary interactive GPS landscape illustration mockup */}
+                      <div className="mt-8 p-6 rounded-3xl border border-stone-200/60 bg-white/95 relative overflow-hidden shadow-sm flex flex-col md:flex-row items-center gap-6 text-left">
+                        {/* Interactive mini vector meadow schematic */}
+                        <div className="w-full md:w-2/5 aspect-square max-w-[180px] rounded-2xl bg-stone-50 border border-stone-150/80 relative flex items-center justify-center overflow-hidden shrink-0 group">
+                          {/* Radial schematic grid lines */}
+                          <div className="absolute inset-0 bg-[radial-gradient(#7c95e4_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+                          <div className="absolute w-28 h-28 rounded-full border border-dashed border-[#7c95e4]/20 animate-spin" style={{ animationDuration: "25s" }} />
+                          <div className="absolute w-16 h-16 rounded-full border border-[#90a98c]/30 animate-pulse" />
+                          
+                          {/* Compass Rose rotating on hover */}
+                          <motion.div 
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+                            className="absolute bottom-2 right-2 text-stone-300 opacity-60"
+                          >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="stroke-current">
+                              <circle cx="12" cy="12" r="9" strokeWidth="1" />
+                              <path d="M12 3 L12 21 M3 12 L21 12" strokeWidth="1" />
+                            </svg>
+                          </motion.div>
+
+                          {/* Pulsing GPS Meadow PIN with elegant ring circles */}
+                          <div className="relative z-10 flex flex-col items-center gap-1">
+                            <motion.div
+                              animate={{ y: [0, -6, 0] }}
+                              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                              className="text-[#7c95e4] drop-shadow-[0_4px_10px_rgba(124,149,228,0.3)]"
+                            >
+                              <MapPin size={34} className="fill-[#7c95e4]/10" />
+                            </motion.div>
+                            <span className="text-[8px] font-mono uppercase bg-[#7c95e4] text-white px-1.5 py-0.5 rounded-full tracking-widest leading-none font-bold">NATI PIN</span>
+                          </div>
+
+                          {/* Interactive status label */}
+                          <div className="absolute top-2 left-2 text-[8px] font-mono uppercase tracking-wider text-stone-400 bg-white/80 border border-stone-100 rounded px-1.5 py-0.5">
+                            Meadow Radar • Live
+                          </div>
+                        </div>
+
+                        {/* Description content */}
+                        <div className="flex-1 flex flex-col justify-start gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#90a98c] font-bold">Coordinates Incoming</span>
+                          </div>
+                          
+                          <h4 className="font-serif font-black text-[#3a4245] text-lg leading-tight">GPS Meadow Drop-Pin Placement</h4>
+                          
+                          <p className="text-stone-500 text-xs font-sans font-light leading-relaxed">
+                            For security and privacy, the exact pin location within Addis Ababa will be broadcasted live through this coordinate terminal 24 hours prior to Sunday afternoon start.
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-3.5 mt-2 pt-2 border-t border-stone-100">
+                            <div className="text-left">
+                              <span className="block text-[8px] font-mono uppercase tracking-wider text-stone-400">Target Region</span>
+                              <span className="text-xs font-serif font-bold text-stone-700">Addis Ababa, Ethiopia</span>
+                            </div>
+                            <div className="h-6 w-[1px] bg-stone-150"></div>
+                            <div className="text-left">
+                              <span className="block text-[8px] font-mono uppercase tracking-wider text-stone-400">Precision Location</span>
+                              <span className="text-xs font-mono font-medium text-stone-700">9.0300° N, 38.7400° E</span>
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={downloadICSFile}
+                              className={`py-2 px-4 rounded-xl text-[10px] font-mono uppercase font-black tracking-widest transition-all inline-flex items-center gap-2 cursor-pointer ${themeStyles.buttonPrimary}`}
+                            >
+                              <Calendar size={12} /> Sync Standard Calendar Invite (.ics)
+                            </motion.button>
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -816,78 +950,256 @@ export default function App() {
                           <p className="text-xs text-stone-400 mt-1 uppercase tracking-widest font-mono">Let us know if you can make it out to the meadow!</p>
                         </div>
 
-                        <form onSubmit={handleFormSubmit} className="max-w-md mx-auto flex flex-col gap-4 text-left">
-                          <div>
-                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Your Name *</label>
-                            <input
-                              type="text"
-                              required
-                              value={formName}
-                              onChange={(e) => setFormName(e.target.value)}
-                              placeholder="Enter your name"
-                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Will you be attending?</label>
-                            <div className="grid grid-cols-2 gap-3 mt-1 text-center">
-                              <button
-                                type="button"
-                                onClick={() => { setFormAttending(true); playCozySpark(); }}
-                                className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
-                                  formAttending 
-                                    ? "bg-[#7c95e4] text-white border-transparent" 
-                                    : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
-                                }`}
+                        <AnimatePresence mode="wait">
+                          {submissionSuccess && lastSubmittedGuest ? (
+                            <motion.div
+                              key="success-card"
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.95, opacity: 0 }}
+                              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                              className="max-w-md mx-auto text-center flex flex-col items-center py-4 relative overflow-visible"
+                            >
+                              {/* Animated Check/Heart Badge with 3D explosion effect */}
+                              <motion.div
+                                initial={{ scale: 0, rotate: -30 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{ delay: 0.15, type: "spring", stiffness: 260, damping: 15 }}
+                                className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 relative ${themeStyles.accentBg} shadow-inner`}
+                                style={{ perspective: 1200, transformStyle: "preserve-3d" }}
                               >
-                                Count me in! 🎉
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setFormAttending(false); playCozySpark(); }}
-                                className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
-                                  !formAttending 
-                                    ? "bg-rose-500 text-white border-transparent" 
-                                    : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
-                                }`}
+                                {/* 3D Particle Explosion Burst */}
+                                <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: "preserve-3d" }}>
+                                  {Array.from({ length: 48 }).map((_, i) => {
+                                    const angle = (i * (360 / 48)) + (Math.random() * 20 - 10);
+                                    // High-velocity realistic radial explosion speed
+                                    const speed = 140 + Math.random() * 280;
+                                    const rad = (angle * Math.PI) / 180;
+                                    const targetX = Math.cos(rad) * speed;
+                                    const targetY = Math.sin(rad) * speed - 60; // Upward breeze impact
+                                    const targetZ = Math.random() * 500 - 250; // Deep spatial 3D displacement
+                                    
+                                    const scale = 0.5 + Math.random() * 1.4;
+                                    const duration = 1.8 + Math.random() * 1.4;
+                                    const delay = Math.random() * 0.1;
+
+                                    // Meadow celebration emojis
+                                    const emojis = ["🌸", "🌿", "✨", "🤍", "🎉", "🍒", "⭐", "🎈", "🍰", "🌻"];
+                                    const emoji = emojis[i % emojis.length];
+
+                                    return (
+                                      <motion.div
+                                        key={i}
+                                        initial={{ 
+                                          x: 0, 
+                                          y: 0, 
+                                          z: 0, 
+                                          scale: 0, 
+                                          opacity: 0,
+                                          rotateX: 0,
+                                          rotateY: 0,
+                                          rotateZ: 0
+                                        }}
+                                        animate={{
+                                          x: [0, targetX],
+                                          y: [0, targetY],
+                                          z: [0, targetZ],
+                                          scale: [0, scale, scale, 0],
+                                          opacity: [0, 1, 1, 0],
+                                          rotateX: [0, Math.random() * 1080 - 540],
+                                          rotateY: [0, Math.random() * 1080 - 540],
+                                          rotateZ: [0, Math.random() * 720 - 360]
+                                        }}
+                                        transition={{
+                                          duration: duration,
+                                          delay: delay,
+                                          ease: [0.1, 0.85, 0.25, 1] // Elite custom cubic-bezier spline for realistic physical friction & pop
+                                        }}
+                                        style={{
+                                          position: "absolute",
+                                          left: "50%",
+                                          top: "50%",
+                                          transform: "translate(-50%, -50%)",
+                                          transformStyle: "preserve-3d"
+                                        }}
+                                        className="text-xl select-none filter drop-shadow-md pointer-events-none"
+                                      >
+                                        {emoji}
+                                      </motion.div>
+                                    );
+                                  })}
+                                </div>
+
+                                <motion.div
+                                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
+                                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                                  className="z-10"
+                                >
+                                  <Heart size={44} className={`${themeStyles.accent} fill-current drop-shadow-sm`} />
+                                </motion.div>
+                                
+                                {/* Glowing Sparkles orbiting the heart badge */}
+                                <motion.div
+                                  animate={{ opacity: [0.4, 1, 0.4], scale: [0.8, 1.2, 0.8] }}
+                                  transition={{ repeat: Infinity, duration: 2 }}
+                                  className="absolute -top-1 -right-1 text-amber-500 z-10"
+                                >
+                                  <Sparkles size={18} />
+                                </motion.div>
+                              </motion.div>
+
+                              <motion.h3
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="font-serif font-black text-2xl text-[#3a4245] mb-2"
                               >
-                                Can't make it 😢
-                              </button>
-                            </div>
-                          </div>
+                                Awesome, {lastSubmittedGuest.name}!
+                              </motion.h3>
 
-                          <div>
-                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Song Request 🎶</label>
-                            <input
-                              type="text"
-                              value={formSong}
-                              onChange={(e) => setFormSong(e.target.value)}
-                              placeholder="tunes u wanna hear."
-                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
-                            />
-                          </div>
+                              <p className="text-stone-550 text-xs sm:text-sm font-sans font-light leading-relaxed mb-6">
+                                Your RSVP has been saved securely to the active registry database and notified instantly to <strong className="font-medium text-[#3a4245]">Meba</strong> via Telegram Bot! 🎉
+                              </p>
 
-                          <div>
-                            <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Funny or Sweet Message for Nati 🤍</label>
-                            <textarea
-                              value={formNote}
-                              onChange={(e) => setFormNote(e.target.value)}
-                              placeholder="Leave a funny or sweet message that will be given to him..."
-                              rows={3}
-                              className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm resize-none"
-                            />
-                          </div>
+                              {/* Ticket Mockup illustrating selection */}
+                              <motion.div
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4, type: "spring" }}
+                                className="w-full bg-stone-50/70 border border-stone-200/50 rounded-2xl p-4 text-left mb-6 flex flex-col gap-2.5 relative overflow-hidden shadow-sm"
+                              >
+                                {/* Side-notched decorative ticket holes */}
+                                <div className="absolute -left-2.5 top-1/2 w-5 h-5 rounded-full bg-white/95 border-r border-stone-200/50 -translate-y-1/2" />
+                                <div className="absolute -right-2.5 top-1/2 w-5 h-5 rounded-full bg-white/95 border-l border-stone-200/50 -translate-y-1/2" />
 
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="submit"
-                            className={`w-full py-4 rounded-xl text-xs font-semibold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${themeStyles.buttonPrimary}`}
-                          >
-                            Send RSVP 💌
-                          </motion.button>
-                        </form>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] font-mono uppercase tracking-widest text-stone-400">RSVP Summary Voucher</span>
+                                  <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
+                                    lastSubmittedGuest.attending ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                                  }`}>
+                                    {lastSubmittedGuest.attending ? "✓ Confirmed" : "Can't Attend"}
+                                  </span>
+                                </div>
+
+                                <div className="border-t border-dashed border-stone-200 my-1"></div>
+
+                                <div className="flex flex-col gap-1 text-stone-700">
+                                  <span className="text-xs font-serif font-black text-[#3a4245]">{lastSubmittedGuest.name}</span>
+                                  {lastSubmittedGuest.song && (
+                                    <p className="text-[10px] text-stone-450 font-mono">
+                                      🎵 Requested tune: <strong className="text-stone-600">{lastSubmittedGuest.song}</strong>
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-stone-500 italic mt-1 leading-normal">
+                                    "{lastSubmittedGuest.note}"
+                                  </p>
+                                </div>
+                              </motion.div>
+
+                              {/* Action items */}
+                              <div className="flex flex-col gap-3 w-full">
+                                <motion.button
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={downloadICSFile}
+                                  className={`w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 flex items-center justify-center gap-2 ${themeStyles.buttonPrimary}`}
+                                >
+                                  <Calendar size={14} /> Add Picnic to Calendar
+                                </motion.button>
+                                
+                                <button
+                                  onClick={() => {
+                                    setSubmissionSuccess(false);
+                                    playCozySpark();
+                                  }}
+                                  className="text-[10px] font-mono uppercase tracking-widest text-stone-400 hover:text-stone-700 transition-colors mt-2 cursor-pointer"
+                                >
+                                  ← Submit another response
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <motion.form
+                              key="rsvp-form"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onSubmit={handleFormSubmit}
+                              className="max-w-md mx-auto flex flex-col gap-4 text-left"
+                            >
+                              <div>
+                                <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Your Name *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={formName}
+                                  onChange={(e) => setFormName(e.target.value)}
+                                  placeholder="Enter your name"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Will you be attending?</label>
+                                <div className="grid grid-cols-2 gap-3 mt-1 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => { setFormAttending(true); playCozySpark(); }}
+                                    className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
+                                      formAttending 
+                                        ? "bg-[#7c95e4] text-white border-transparent" 
+                                        : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
+                                    }`}
+                                  >
+                                    Count me in! 🎉
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setFormAttending(false); playCozySpark(); }}
+                                    className={`py-3 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
+                                      !formAttending 
+                                        ? "bg-rose-500 text-white border-transparent" 
+                                        : "bg-white border-stone-200 text-stone-600 hover:bg-[#fbf9f3]"
+                                    }`}
+                                  >
+                                    Can't make it 😢
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Song Request 🎶</label>
+                                <input
+                                  type="text"
+                                  value={formSong}
+                                  onChange={(e) => setFormSong(e.target.value)}
+                                  placeholder="tunes u wanna hear."
+                                  className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-mono uppercase tracking-wider text-stone-500 mb-1">Funny or Sweet Message for Nati 🤍</label>
+                                <textarea
+                                  value={formNote}
+                                  onChange={(e) => setFormNote(e.target.value)}
+                                  placeholder="Leave a funny or sweet message that will be given to him..."
+                                  rows={3}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7c95e4] bg-white text-stone-850 placeholder-stone-400 text-sm resize-none"
+                                />
+                              </div>
+
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                type="submit"
+                                className={`w-full py-4 rounded-xl text-xs font-semibold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${themeStyles.buttonPrimary}`}
+                              >
+                                Send RSVP 💌
+                              </motion.button>
+                            </motion.form>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* SUBTLE NOTIFICATION NOTE */}
