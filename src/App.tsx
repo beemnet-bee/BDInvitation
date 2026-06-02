@@ -188,8 +188,26 @@ export default function App() {
 
   // Fetch alive RSVPs on load
   useEffect(() => {
-    fetch("/api/rsvp")
-      .then(res => res.json())
+    const isVercelHost = typeof window !== "undefined" && (
+      window.location.hostname.includes("vercel.app") || 
+      window.location.hostname.includes("vercel.dev") || 
+      (!window.location.hostname.includes("localhost") && window.location.port !== "3000")
+    );
+
+    const rsvpEndpoint = isVercelHost 
+      ? "https://kvdb.io/NatiPicnicSurpriseRsvps_2026_v2/rsvp_list" 
+      : "/api/rsvp";
+
+    fetch(rsvpEndpoint)
+      .then(res => {
+        if (!res.ok) {
+          if (res.status === 404) {
+            return []; // Treat 404 as an empty list
+          }
+          throw new Error("HTTP error " + res.status);
+        }
+        return res.json();
+      })
       .then(data => {
         if (Array.isArray(data)) {
           setRsvpList(data);
@@ -197,7 +215,15 @@ export default function App() {
         }
       })
       .catch(err => {
-        console.error("Backend RSVP load error, fallback to local storage:", err);
+        console.error("RSVP load error from " + rsvpEndpoint + ", fallback to local cache:", err);
+        try {
+          const saved = localStorage.getItem("picnic_rsvp_list");
+          if (saved) {
+            setRsvpList(JSON.parse(saved));
+          }
+        } catch (e) {
+          console.error("Local storage fallback retrieve crashed:", e);
+        }
       });
   }, []);
 
@@ -365,11 +391,24 @@ export default function App() {
     );
 
     if (isVercelHost) {
-      // Direct Vercel Serverless / Static Mode: process instantly on client & trigger fallback Slack/Telegram
+      // Direct Vercel Serverless / Static Mode: process instantly on client, sync with Cloud, & trigger fallback Telegram
       const updatedList = [payload, ...rsvpList];
       setRsvpList(updatedList);
       localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
       localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
+
+      fetch("https://kvdb.io/NatiPicnicSurpriseRsvps_2026_v2/rsvp_list", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedList)
+      })
+        .then(() => {
+          console.log("Direct Vercel RSVP saved to Cloud Storage!");
+        })
+        .catch(err => {
+          console.error("Direct Vercel Cloud Storage save failed:", err);
+        });
+
       sendTelegramNotificationClient(payload);
     } else {
       fetch("/api/rsvp", {

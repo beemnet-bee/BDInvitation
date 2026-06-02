@@ -105,33 +105,75 @@ const OFFICIAL_GUESTS_DATA = [
 ];
 
 const INITIAL_GUESTS: any[] = [];
+const CLOUD_STORAGE_URL = "https://kvdb.io/NatiPicnicSurpriseRsvps_2026_v2/rsvp_list";
 
-function getRSVPs() {
+function getLocalRSVPs() {
   try {
     if (fs.existsSync(RSVP_FILE)) {
       const data = fs.readFileSync(RSVP_FILE, "utf-8");
       return JSON.parse(data);
     }
   } catch (error) {
-    console.error("Failed to read rsvps.json:", error);
+    console.error("Failed to read local rsvps.json:", error);
   }
   return INITIAL_GUESTS;
 }
 
-function saveRSVPs(list: any[]) {
+function saveLocalRSVPs(list: any[]) {
   try {
     fs.writeFileSync(RSVP_FILE, JSON.stringify(list, null, 2), "utf-8");
   } catch (error) {
-    console.error("Failed to write to rsvps.json:", error);
+    console.error("Failed to write to local rsvps.json:", error);
+  }
+}
+
+async function getRSVPs(): Promise<any[]> {
+  try {
+    const res = await fetch(CLOUD_STORAGE_URL, {
+      headers: { "Accept": "application/json" }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        // Cache locally in case cloud goes down
+        saveLocalRSVPs(data);
+        return data;
+      }
+    } else if (res.status === 404) {
+      return [];
+    }
+  } catch (error) {
+    console.error("Failed to read from Cloud Storage, using local backup:", error);
+  }
+  return getLocalRSVPs();
+}
+
+async function saveRSVPs(list: any[]) {
+  // Sync locally first
+  saveLocalRSVPs(list);
+  
+  // Save to Cloud Storage
+  try {
+    const res = await fetch(CLOUD_STORAGE_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(list)
+    });
+    if (!res.ok) {
+      console.error("Cloud Storage Save failed with status:", res.status);
+    }
+  } catch (error) {
+    console.error("Failed to save to Cloud Storage:", error);
   }
 }
 
 // RSVP API Routes
-app.get("/api/rsvp", (req, res) => {
-  res.json(getRSVPs());
+app.get("/api/rsvp", async (req, res) => {
+  const rsvps = await getRSVPs();
+  res.json(rsvps);
 });
 
-app.post("/api/rsvp", (req, res) => {
+app.post("/api/rsvp", async (req, res) => {
   try {
     const { name, attending, song, note } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
@@ -148,7 +190,7 @@ app.post("/api/rsvp", (req, res) => {
       return res.status(403).json({ error: "Your name is not on Nati's official guest invite list. Please double check the spelling or contact the administrator (Meba) to be added!" });
     }
 
-    const currentList = getRSVPs();
+    const currentList = await getRSVPs();
     const newEntry = {
       name: matched.display, // Save standardized display name (e.g. "Ruth")
       attending: !!attending,
@@ -158,7 +200,7 @@ app.post("/api/rsvp", (req, res) => {
     };
 
     const updatedList = [newEntry, ...currentList];
-    saveRSVPs(updatedList);
+    await saveRSVPs(updatedList);
 
     // Dynamic Telegram notification dispatch to the Host (Meba)
     try {
