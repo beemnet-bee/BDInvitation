@@ -88,9 +88,23 @@ Write a high-quality greeting specifically for the upcoming card.`;
 
 const RSVP_FILE = path.join(process.cwd(), "rsvps.json");
 
-const INITIAL_GUESTS = [
-  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" }
+const OFFICIAL_GUESTS_DATA = [
+  { id: "barkot", display: "Barkot", emoji: "🐨" },
+  { id: "beemnet", display: "Beemnet", emoji: "✨" },
+  { id: "betibeb", display: "Betibeb", emoji: "🎨" },
+  { id: "bini", display: "Bini", emoji: "🎸" },
+  { id: "estube", display: "Estube", emoji: "🧁" },
+  { id: "gebre", display: "Gebre", emoji: "🛹" },
+  { id: "haild", display: "Haild", emoji: "☀️" },
+  { id: "hunda", display: "Hunda", emoji: "🦁" },
+  { id: "meba", display: "Meba D. GOAT", emoji: "👑" },
+  { id: "ruth", display: "Ruth", emoji: "🌸" },
+  { id: "sifen", display: "Sifen", emoji: "🐳" },
+  { id: "tibebe", display: "Tibebe", emoji: "🍀" },
+  { id: "yonas", display: "Yonas", emoji: "🕺" }
 ];
+
+const INITIAL_GUESTS: any[] = [];
 
 function getRSVPs() {
   try {
@@ -124,9 +138,19 @@ app.post("/api/rsvp", (req, res) => {
       return res.status(400).json({ error: "Name is a required field." });
     }
 
+    const trimmed = name.trim();
+    const matched = OFFICIAL_GUESTS_DATA.find(g => 
+      g.id === trimmed.toLowerCase() || 
+      g.display.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (!matched) {
+      return res.status(403).json({ error: "Your name is not on Nati's official guest invite list. Please double check the spelling or contact the administrator (Meba) to be added!" });
+    }
+
     const currentList = getRSVPs();
     const newEntry = {
-      name: name.trim(),
+      name: matched.display, // Save standardized display name (e.g. "Ruth")
       attending: !!attending,
       song: song ? song.trim() : "Surprise Nati Vibes!",
       note: note ? note.trim() : "Sending best wishes on your 20th! 🤍",

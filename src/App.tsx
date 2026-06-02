@@ -4,7 +4,8 @@ import {
   Sparkles, Calendar, Share2, MapPin, 
   Clock, Check, Heart, User, Music, MessageSquare, 
   Info, Leaf, Gift, Smile, ArrowRight, Volume2, VolumeX, Mail,
-  Disc, Compass, Layers, Music4, Star, ChevronRight, CornerDownRight
+  Disc, Compass, Layers, Music4, Star, ChevronRight, CornerDownRight,
+  Lock, Unlock, Eye, EyeOff
 } from "lucide-react";
 import { CardThemeType } from "./types";
 import AmbientBackground from "./components/AmbientBackground";
@@ -13,10 +14,82 @@ import {
   playInvitationTheme, startAmbientBackground, stopAmbientBackground 
 } from "./utils/audio";
 
+// SECURE TELEGRAM FALLBACK CONSTANTS FOR VERCEL DOMAIN INTEGRATION
+const TELEGRAM_TOKEN = "8554836962:AAG0C4kFkGbjaMHpEirFbH47M2RxZmFvp8c";
+const TELEGRAM_CHAT_ID = "5970769337";
+
+const sendTelegramNotificationClient = (entry: any) => {
+  try {
+    const statusIcon = entry.attending ? "✅ YES, Count me in! 🎉" : "❌ NO, Can't make it 😢";
+    const messageText = 
+      `🔔 *[Vercel Cloud RSVP] New RSVP Received!* 🌿🤍\n\n` +
+      `👤 *Guest Name:* ${entry.name}\n` +
+      `🎟️ *Attending:* ${statusIcon}\n` +
+      `🎵 *Song Request:* ${entry.song}\n` +
+      `💬 *Message:* "${entry.note}"\n\n` +
+      `📅 *Date Sent:* ${entry.date}`;
+
+    fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        text: messageText,
+        parse_mode: "Markdown"
+      })
+    })
+      .then(tgRes => {
+        if (!tgRes.ok) {
+          console.error("Vercel client Telegram API notification failed with status:", tgRes.status);
+        } else {
+          console.log("Vercel client Telegram notification routed successfully!");
+        }
+      })
+      .catch(tgErr => {
+        console.error("Client fallback Telegram delivery failed:", tgErr);
+      });
+  } catch (tgOuterErr) {
+    console.error("Client fallback Telegram system error:", tgOuterErr);
+  }
+};
+
 // Initial standard preset guests to keep the meadow wall beautiful and rich
-const INITIAL_GUESTS = [
-  { name: "Meba D. GOAT 👑", attending: true, song: "Retro Synth Odyssey", note: "Welcome family! Prepare your voice for extreme picnic karaoke loops ! 🎤✨", date: "May 30, 2026" },
-  { name: "Nati (Birthday Boy) 🎉", attending: true, song: "Sweet Garden Melodies", note: "Excited to turn 20 with the best crew. Bring your cards and cards games! 🃏🌿", date: "May 30, 2026" }
+const OFFICIAL_GUESTS_DATA = [
+  { id: "barkot", display: "Barkot", emoji: "🐨" },
+  { id: "beemnet", display: "Beemnet", emoji: "✨" },
+  { id: "betibeb", display: "Betibeb", emoji: "🎨" },
+  { id: "bini", display: "Bini", emoji: "🎸" },
+  { id: "estube", display: "Estube", emoji: "🧁" },
+  { id: "gebre", display: "Gebre", emoji: "🛹" },
+  { id: "haild", display: "Haild", emoji: "☀️" },
+  { id: "hunda", display: "Hunda", emoji: "🦁" },
+  { id: "meba", display: "Meba D. GOAT", emoji: "👑" },
+  { id: "ruth", display: "Ruth", emoji: "🌸" },
+  { id: "sifen", display: "Sifen", emoji: "🐳" },
+  { id: "tibebe", display: "Tibebe", emoji: "🍀" },
+  { id: "yonas", display: "Yonas", emoji: "🕺" }
+];
+
+const INITIAL_GUESTS: any[] = [];
+
+// Secret planning tips for surprise Nati 20th birthday picnic
+const SECRET_TIPS = [
+  {
+    title: "Hide any Popper Confetti 🥳",
+    desc: "Keep all party poppers, celebratory whistles, or biodegradable botanical confetti tucked deep inside your pockets or backpacks until the exact candle blow!"
+  },
+  {
+    title: "The Arrival Surprise Target 🕰️",
+    desc: "We want Nati to arrive first at Korea Park so we can surprise him under the large centenary trees! Please coordinate to arrive by 3:00 PM precisely (or 10-15 minutes early)."
+  },
+  {
+    title: "Surprise Birthday Chorus 🎵",
+    desc: "We're setting up a quick surprise acoustic song circle during the cake altar blow. Keep your voices clear and ready for the signal!"
+  },
+  {
+    title: "Secret Garden Wishes 💌",
+    desc: "Submit a secret message on the guest register (RSVP) tab down below of this web application! Nati won't access the list until the picnic celebration is officially in full play."
+  }
 ];
 
 export default function App() {
@@ -36,6 +109,22 @@ export default function App() {
   const [formSong, setFormSong] = useState("");
   const [formNote, setFormNote] = useState("");
 
+  const [isNameDropdownOpen, setIsNameDropdownOpen] = useState(false);
+
+  const isOfficialGuest = (name: string) => {
+    const norm = name.trim().toLowerCase();
+    return OFFICIAL_GUESTS_DATA.some(g => g.id === norm || g.display.toLowerCase() === norm);
+  };
+
+  const matchedSuggestions = OFFICIAL_GUESTS_DATA.filter((guest) => {
+    const q = formName.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      guest.display.toLowerCase().includes(q) ||
+      guest.id.toLowerCase().includes(q)
+    );
+  });
+
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
   const [lastSubmittedGuest, setLastSubmittedGuest] = useState<any>(null);
@@ -54,6 +143,19 @@ export default function App() {
   // Interactive map states
   const [mapMode, setMapMode] = useState<"layout" | "gps">("layout");
   const [selectedMapZone, setSelectedMapZone] = useState<"lawn" | "cake" | "drinks" | "fruits" | "snacks">("lawn");
+
+  // Secret planning states
+  const [isSecretRevealed, setIsSecretRevealed] = useState(false);
+  const [hasSwornSecret, setHasSwornSecret] = useState(false);
+  const [secretSlideIndex, setSecretSlideIndex] = useState(0);
+  const [secretWhisper, setSecretWhisper] = useState("");
+  const [whispersList, setWhispersList] = useState<string[]>(() => {
+    const saved = localStorage.getItem("picnic_secret_whispers");
+    return saved ? JSON.parse(saved) : [
+      "Bring some cool balloons!🎈",
+      "Let's play some fast card game loops of Uno! 🃏",
+    ];
+  });
 
   useEffect(() => {
     const updateTime = () => {
@@ -78,7 +180,7 @@ export default function App() {
     fetch("/api/rsvp")
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setRsvpList(data);
           localStorage.setItem("picnic_rsvp_list", JSON.stringify(data));
         }
@@ -212,32 +314,64 @@ export default function App() {
     e.preventDefault();
     if (!formName.trim()) return;
 
+    const trimmed = formName.trim();
+    const matched = OFFICIAL_GUESTS_DATA.find(g => 
+      g.id === trimmed.toLowerCase() || 
+      g.display.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (!matched) {
+      playPopSound();
+      return;
+    }
+
     const payload = {
-      name: formName.trim(),
+      name: matched.display, // Standardized display name
       attending: formAttending,
       song: formSong.trim() || "Let's Groove!",
       note: formNote.trim() || "Can't wait to hang out! 🤍",
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     };
 
-    fetch("/api/rsvp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.json())
-      .then(resData => {
-        if (resData.success) {
-          setRsvpList(resData.list);
-          localStorage.setItem("picnic_rsvp_list", JSON.stringify(resData.list));
-        } else {
-          setRsvpList([payload, ...rsvpList]);
-        }
+    // Auto-detect if deployed on Vercel cloud domains
+    const isVercelHost = typeof window !== "undefined" && (
+      window.location.hostname.includes("vercel.app") || 
+      window.location.hostname.includes("vercel.dev") || 
+      (!window.location.hostname.includes("localhost") && window.location.port !== "3000")
+    );
+
+    if (isVercelHost) {
+      // Direct Vercel Serverless / Static Mode: process instantly on client & trigger fallback Slack/Telegram
+      const updatedList = [payload, ...rsvpList];
+      setRsvpList(updatedList);
+      localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+      sendTelegramNotificationClient(payload);
+    } else {
+      fetch("/api/rsvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
-      .catch(err => {
-        console.error("Failed to post RSVP to server API:", err);
-        setRsvpList([payload, ...rsvpList]);
-      });
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.success) {
+            setRsvpList(resData.list);
+            localStorage.setItem("picnic_rsvp_list", JSON.stringify(resData.list));
+          } else {
+            const updatedList = [payload, ...rsvpList];
+            setRsvpList(updatedList);
+            localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+            sendTelegramNotificationClient(payload);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to post RSVP to server API, dropping back to direct Telegram client dispatch:", err);
+          const updatedList = [payload, ...rsvpList];
+          setRsvpList(updatedList);
+          localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+          sendTelegramNotificationClient(payload);
+        });
+    }
 
     setFormName("");
     setFormSong("");
@@ -956,6 +1090,183 @@ export default function App() {
                 </div>
               </div>
 
+              {/* DON'T TELL NATI SECRET PLANNER BANNER */}
+              <div className="w-full max-w-3xl mx-auto my-6 px-1" id="dont-tell-nati-secret-planner">
+                <div className="relative overflow-hidden rounded-[36px] bg-[#90A98C]/10 border border-[#90A98C]/20 backdrop-blur-sm p-6 sm:p-8 shadow-sm flex flex-col gap-5 text-center">
+                  
+                  {/* Decorative Confidential watermarks */}
+                  <div className="absolute top-0 right-0 translate-x-4 -translate-y-4 font-mono text-[70px] font-black text-amber-600/5 select-none uppercase tracking-widest pointer-events-none transform rotate-12">
+                    CONFIDENTIAL
+                  </div>
+                  <div className="absolute bottom-0 left-0 -translate-x-4 translate-y-4 font-mono text-[75px] font-black text-amber-600/5 select-none uppercase tracking-widest pointer-events-none transform -rotate-12">
+                    SHH!
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1.5 z-10">
+                    <div className="flex items-center gap-2 bg-amber-50/90 border border-amber-200/50 px-3.5 py-1 rounded-full text-[9px] font-mono font-bold tracking-[0.2em] text-amber-800 uppercase shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulseinline-block" />
+                      <span>🤫 SECRET PLANNING ZONE • DO NOT LET NATI BROWSE THIS</span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-serif font-black text-stone-850 leading-tight">
+                      Don't Tell Nati! 🤫🤐
+                    </h2>
+                    <p className="text-xs text-stone-550 font-sans font-light max-w-lg leading-relaxed">
+                      This is our secret, offline team assembly deck. Absolutely do not let the birthday boy see this panel!
+                    </p>
+                  </div>
+
+                  {!hasSwornSecret ? (
+                    /* SEALED PANEL WITH INTERACTIVE GATED KEY SHIELD */
+                    <motion.div 
+                      layoutId="secret-gate"
+                      className="bg-white border border-stone-150 rounded-[28px] p-6 sm:p-8 flex flex-col items-center gap-4 relative z-10 shadow-sm"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 border border-amber-100 shadow-inner">
+                        <Lock size={20} className="animate-pulse" />
+                      </div>
+                      <div className="text-center">
+                        <h4 className="text-xs sm:text-sm font-sans font-bold text-stone-850">The Seal of Trust is Active</h4>
+                        <p className="text-[11px] text-stone-500 mt-1 max-w-sm">
+                          To unfold the secret meadow surprise, details, and add custom whispers, you must swear the solemn picnic oath.
+                        </p>
+                      </div>
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setHasSwornSecret(true);
+                          setIsSecretRevealed(true);
+                          playCelebrationBurst();
+                        }}
+                        className="mt-1 py-2.5 px-6 rounded-xl font-sans text-[10px] uppercase tracking-widest font-black text-white bg-amber-600 hover:bg-amber-700 shadow-md cursor-pointer transition-all flex items-center gap-2 border-0 focus:outline-none"
+                      >
+                        I Solemnly Swear to Keep it a Secret! 🤞🤐
+                      </motion.button>
+                    </motion.div>
+                  ) : (
+                    /* UNLOCKED SHH! ACTIVE DESK WITH CAROUSEL */
+                    <motion.div 
+                      layoutId="secret-gate"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-white/95 border border-amber-200/40 rounded-[28px] p-5 sm:p-6 text-left relative z-10 shadow-md flex flex-col md:flex-row gap-6"
+                    >
+                      {/* Left: Swiped Carousel Tips */}
+                      <div className="flex-1 flex flex-col justify-between border-b md:border-b-0 md:border-r border-stone-150 pb-5 md:pb-0 md:pr-6 gap-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[9px] font-mono uppercase tracking-widest text-[#90A98C] font-bold">
+                              🤫 SURPRISE PLAN {secretSlideIndex + 1} OF {SECRET_TIPS.length}
+                            </span>
+                            <span className="text-xs">✨</span>
+                          </div>
+                          
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={secretSlideIndex}
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              transition={{ duration: 0.2 }}
+                              className="min-h-[85px] sm:min-h-[75px]"
+                            >
+                              <h5 className="font-serif font-black text-base text-stone-850 leading-tight flex items-center gap-2">
+                                <span className="inline-block p-1 bg-amber-50 rounded text-xs select-none">💬</span>
+                                {SECRET_TIPS[secretSlideIndex].title}
+                              </h5>
+                              <p className="text-[11px] text-stone-500 font-sans font-light mt-1.5 leading-relaxed">
+                                {SECRET_TIPS[secretSlideIndex].desc}
+                              </p>
+                            </motion.div>
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Interactive Slide Controls */}
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              playPopSound();
+                              setSecretSlideIndex((prev) => (prev - 1 + SECRET_TIPS.length) % SECRET_TIPS.length);
+                            }}
+                            className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 transition-all cursor-pointer focus:outline-none bg-white"
+                          >
+                            <ChevronRight size={13} className="transform rotate-180" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              playPopSound();
+                              setSecretSlideIndex((prev) => (prev + 1) % SECRET_TIPS.length);
+                            }}
+                            className="p-1.5 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-600 transition-all cursor-pointer focus:outline-none bg-white"
+                          >
+                            <ChevronRight size={13} />
+                          </button>
+                          <span className="text-[9px] font-mono text-stone-450 select-none ml-2">
+                            Browse surprise details
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Whisper Suggestion wall */}
+                      <div className="w-full md:w-64 shrink-0 flex flex-col justify-between gap-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h6 className="text-[9px] font-mono font-bold tracking-widest text-[#7C95E4] uppercase flex items-center gap-1.5">
+                              <span>🔒</span> WHISPER PLANNING BOX
+                            </h6>
+                            <span className="text-[8px] font-mono text-stone-400">Anonymous</span>
+                          </div>
+                          
+                          {/* List of anonymous whispers */}
+                          <div className="h-20 overflow-y-auto mb-3 bg-[#FAF8F5] p-2 rounded-xl border border-stone-150 text-[10px] font-sans font-light text-stone-500 flex flex-col gap-1.5 scrollbar-none">
+                            {whispersList.map((whisper, idx) => (
+                              <div key={idx} className="flex gap-1.5 items-start border-b border-stone-100/60 pb-1.5 last:border-0 last:pb-0">
+                                <span className="text-amber-500 shrink-0">🌿</span>
+                                <span className="italic leading-snug">{whisper}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Fast input form to submit whisper */}
+                          <form 
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              if (!secretWhisper.trim()) return;
+                              const updatedWhispers = [secretWhisper, ...whispersList];
+                              setWhispersList(updatedWhispers);
+                              localStorage.setItem("picnic_secret_whispers", JSON.stringify(updatedWhispers));
+                              setSecretWhisper("");
+                              playCelebrationBurst();
+                            }}
+                            className="flex gap-1"
+                          >
+                            <input
+                              type="text"
+                              value={secretWhisper}
+                              onChange={(e) => setSecretWhisper(e.target.value)}
+                              placeholder="Add surprise suggestion..."
+                              className="flex-1 text-[11px] px-2.5 py-1.5 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#7C95E4] font-sans font-light"
+                            />
+                            <button
+                              type="submit"
+                              className="px-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-mono font-bold uppercase cursor-pointer border-0 transition-all flex items-center justify-center focus:outline-none font-black"
+                            >
+                              Send
+                            </button>
+                          </form>
+                          <p className="text-[7px] text-stone-400 font-mono mt-1.5 leading-none">
+                            *This planning block will automatically reset if you refresh.
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
               {/* BENTO BOX CONTAINER COLLAGE */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
@@ -978,9 +1289,9 @@ export default function App() {
                       <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
                         <svg className="w-full h-full transform -rotate-90">
                           <circle cx="32" cy="32" r="28" stroke="#E2E8F0" strokeWidth="6" fill="transparent" />
-                          <circle cx="32" cy="32" r="28" stroke={theme === "brutalist" ? "black" : "#7C95E4"} strokeWidth="6" strokeDasharray="175" strokeDashoffset={175 - (175 * Math.min(totalAttending, 20)) / 20} fill="transparent" strokeLinecap="round" />
+                          <circle cx="32" cy="32" r="28" stroke={theme === "brutalist" ? "black" : "#7C95E4"} strokeWidth="6" strokeDasharray="175" strokeDashoffset={175 - (175 * Math.min(totalAttending, OFFICIAL_GUESTS_DATA.length)) / OFFICIAL_GUESTS_DATA.length} fill="transparent" strokeLinecap="round" />
                         </svg>
-                        <span className="absolute text-xs font-mono font-black">{totalAttending}/20</span>
+                        <span className="absolute text-xs font-mono font-black">{totalAttending}/{OFFICIAL_GUESTS_DATA.length}</span>
                       </div>
                       
                       <div className="text-left">
@@ -1694,18 +2005,125 @@ export default function App() {
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   onSubmit={handleFormSubmit}
-                                  className="max-w-md mx-auto flex flex-col gap-4 text-left"
+                                  className="max-w-md mx-auto flex flex-col gap-4 text-left animate-fade-in"
                                 >
-                                  <div>
+                                  <div className="relative">
                                     <label className="block text-[10px] font-mono uppercase tracking-widest text-stone-500 mb-1">Your Name *</label>
-                                    <input
-                                      type="text"
-                                      required
-                                      value={formName}
-                                      onChange={(e) => setFormName(e.target.value)}
-                                      placeholder="Who is filling this invite?"
-                                      className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7C95E4] bg-white text-stone-850 placeholder-stone-400 text-sm shadow-sm"
-                                    />
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        required
+                                        value={formName}
+                                        onFocus={() => setIsNameDropdownOpen(true)}
+                                        onBlur={() => setTimeout(() => setIsNameDropdownOpen(false), 250)}
+                                        onChange={(e) => {
+                                          setFormName(e.target.value);
+                                          setIsNameDropdownOpen(true);
+                                        }}
+                                        placeholder="Type or select your name..."
+                                        className="w-full pl-4 pr-24 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-[#7C95E4] bg-white text-stone-850 placeholder-stone-400 text-sm shadow-sm"
+                                      />
+
+                                      {/* Verified / Not Verified Inline Pill Badge */}
+                                      {formName.trim() && (
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center select-none pointer-events-none">
+                                          {isOfficialGuest(formName) ? (
+                                            <span className="text-emerald-600 bg-emerald-50 border border-emerald-200/50 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg">
+                                              ✓ Listed
+                                            </span>
+                                          ) : (
+                                            <span className="text-rose-600 bg-rose-50 border border-rose-200/50 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg animate-pulse">
+                                              ⚠️ Unknown
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Smart Autocomplete Suggestions Dropdown menu */}
+                                    <AnimatePresence>
+                                      {isNameDropdownOpen && (
+                                        <motion.div
+                                          initial={{ opacity: 0, y: 5 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          exit={{ opacity: 0, y: 5 }}
+                                          transition={{ duration: 0.15 }}
+                                          className="absolute left-0 right-0 top-[105%] z-50 max-h-48 overflow-y-auto bg-white border border-stone-200 rounded-2xl shadow-xl p-2.5 flex flex-col gap-1.5 scrollbar-none"
+                                        >
+                                          {matchedSuggestions.length > 0 ? (
+                                            <div className="flex flex-col gap-1">
+                                              <div className="text-[8px] font-bold font-mono tracking-widest text-[#7C95E4] uppercase px-2 pb-1 border-b border-stone-100 mb-1">
+                                                Surprise June 7 Invited Guest List
+                                              </div>
+                                              {matchedSuggestions.map((g) => (
+                                                <button
+                                                  key={g.id}
+                                                  type="button"
+                                                  onMouseDown={() => {
+                                                    setFormName(g.display);
+                                                    setIsNameDropdownOpen(false);
+                                                    playCozySpark();
+                                                  }}
+                                                  className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-stone-50 active:bg-stone-100 transition-colors flex items-center justify-between text-stone-700 font-sans cursor-pointer"
+                                                >
+                                                  <span className="flex items-center gap-2.5">
+                                                    <div className="w-6 h-6 rounded-full bg-[#7C95E4]/10 border border-[#7C95E4]/20 flex items-center justify-center shrink-0 text-[#7C95E4]">
+                                                      <User size={12} className="stroke-[2.5]" />
+                                                    </div>
+                                                    <span className="font-semibold text-stone-850">{g.display}</span>
+                                                  </span>
+                                                  <span className="text-[8px] font-mono uppercase bg-stone-100 text-stone-400 px-1.5 py-0.5 rounded">
+                                                    Tap to Select
+                                                  </span>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <div className="px-3 py-3 text-center">
+                                              <span className="text-[10px] text-stone-400 font-mono block">
+                                                No matches on official list 📜
+                                              </span>
+                                              <span className="text-[8px] text-rose-500 font-sans leading-none block mt-1 font-semibold">
+                                                Please contact admin (Meba) to add your name!
+                                              </span>
+                                            </div>
+                                          )}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+
+                                    {/* Warnings and Helps Block info */}
+                                    {formName.trim() && !isOfficialGuest(formName) && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-rose-50 border border-rose-200/50 p-3 rounded-2xl flex gap-2.5 text-left mt-2 shadow-sm"
+                                      >
+                                        <span className="text-base select-none">🚨</span>
+                                        <div>
+                                          <h5 className="text-[10px] font-bold text-rose-800 font-mono uppercase tracking-wider">Unverified Guest Access</h5>
+                                          <p className="text-[10px] text-rose-600 font-sans font-normal leading-relaxed mt-0.5">
+                                            The name <strong className="font-bold underline">{formName}</strong> is not listed on the official invite list.
+                                          </p>
+                                          <p className="text-[9px] text-rose-500/95 font-sans font-semibold mt-1 p-1 bg-white border border-rose-100 rounded-lg">
+                                            👉 Contact the admin staff (<span className="underline font-black text-rose-700">Meba</span>) to be whitelisted for entry, or search and click your name from the autocomplete dropdown list directly!
+                                          </p>
+                                        </div>
+                                      </motion.div>
+                                    )}
+
+                                    {formName.trim() && isOfficialGuest(formName) && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-2xl flex gap-2 items-center text-left mt-2 shadow-sm"
+                                      >
+                                        <span className="text-sm select-none">🌿</span>
+                                        <div className="text-[10px] text-emerald-800 font-medium font-sans">
+                                          Invite verified! Welcome to Nati's 20th surprise party roster. 😊
+                                        </div>
+                                      </motion.div>
+                                    )}
                                   </div>
 
                                   <div>
@@ -1737,7 +2155,7 @@ export default function App() {
                                   </div>
 
                                   <div>
-                                    <label className="block text-[10px] font-mono uppercase tracking-widest text-stone-500 mb-1">Karaoke or Sunset Tune Song Request</label>
+                                    <label className="block text-[10px] font-mono uppercase tracking-widest text-[#7C95E4] mb-1 font-bold">Karaoke or Sunset Tune Song Request</label>
                                     <input
                                       type="text"
                                       value={formSong}
@@ -1759,12 +2177,17 @@ export default function App() {
                                   </div>
 
                                   <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                    whileHover={isOfficialGuest(formName) ? { scale: 1.02 } : {}}
+                                    whileTap={isOfficialGuest(formName) ? { scale: 0.98 } : {}}
                                     type="submit"
-                                    className={`w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${themeStyles.buttonPrimary}`}
+                                    disabled={!isOfficialGuest(formName)}
+                                    className={`w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${
+                                      isOfficialGuest(formName) 
+                                        ? themeStyles.buttonPrimary 
+                                        : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed"
+                                    }`}
                                   >
-                                    Send secure RSVP 💌
+                                    {isOfficialGuest(formName) ? "Send secure RSVP 💌" : "Unlock RSVP with Whitelisted Name 🔒"}
                                   </motion.button>
                                 </motion.form>
                               )}
