@@ -7,6 +7,18 @@ import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
+// =========================================================================
+// IN-PROJECT CONFIGURATION (Keys, Variables, and IDs declared directly in-code)
+// =========================================================================
+const PROJECT_CONFIG = {
+  // Put your Gemini API key directly here. Fallbacks to process.env if empty.
+  GEMINI_API_KEY: "",
+  
+  // Telegram Bot Credentials for instant RSVP notification updates
+  TELEGRAM_TOKEN: "8554836962:AAG0C4kFkGbjaMHpEirFbH47M2RxZmFvp8c",
+  TELEGRAM_CHAT_ID: "5970769337"
+};
+
 const app = express();
 const PORT = 3000;
 
@@ -16,7 +28,7 @@ app.use(express.json());
 let aiClient: GoogleGenAI | null = null;
 function getGeminiClient(): GoogleGenAI | null {
   if (!aiClient) {
-    const key = process.env.GEMINI_API_KEY;
+    const key = PROJECT_CONFIG.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!key) {
       console.warn("WARNING: GEMINI_API_KEY is not defined. AI wishes will use fallback messages.");
       return null;
@@ -126,8 +138,8 @@ app.post("/api/rsvp", (req, res) => {
 
     // Dynamic Telegram notification dispatch to the Host (Meba)
     try {
-      const tgToken = process.env.TELEGRAM_TOKEN || "8554836962:AAG0C4kFkGbjaMHpEirFbH47M2RxZmFvp8c";
-      const tgChatId = process.env.TELEGRAM_CHAT_ID || "5970769337";
+      const tgToken = PROJECT_CONFIG.TELEGRAM_TOKEN;
+      const tgChatId = PROJECT_CONFIG.TELEGRAM_CHAT_ID;
 
       const statusIcon = newEntry.attending ? "✅ YES, Count me in! 🎉" : "❌ NO, Can't make it 😢";
       const messageText = 

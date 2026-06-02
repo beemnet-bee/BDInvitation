@@ -47,6 +47,14 @@ export default function App() {
   // Live ticking Clock to track Addis Ababa standard time
   const [addisTime, setAddisTime] = useState("");
 
+  // Target Banner interaction states
+  const [isHoveredTitle, setIsHoveredTitle] = useState(false);
+  const [isHoveredPill, setIsHoveredPill] = useState(false);
+
+  // Interactive map states
+  const [mapMode, setMapMode] = useState<"layout" | "gps">("layout");
+  const [selectedMapZone, setSelectedMapZone] = useState<"lawn" | "cake" | "drinks" | "fruits" | "snacks">("lawn");
+
   useEffect(() => {
     const updateTime = () => {
       // Addis Ababa is UTC+3
@@ -659,15 +667,291 @@ export default function App() {
 
             <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 flex flex-col gap-8 justify-start">
               
-              {/* BRAND HERO POSTER BANNER */}
-              <div className="text-center py-4 flex flex-col gap-3 relative overflow-hidden">
-                <span className="font-cursive text-2xl text-[#7C95E4] block select-none">You are cordially invited to</span>
-                <h1 className={`text-4xl sm:text-7xl font-sans tracking-tight font-black leading-none uppercase ${themeStyles.headingText}`}>
-                  NATI'S <span className="font-cursive italic font-light text-3xl sm:text-6xl text-[#90A98C] normal-case">Picnic</span> BIRTHDAY
+               {/* BRAND HERO POSTER BANNER */}
+              <div 
+                onMouseEnter={() => setIsHoveredTitle(true)}
+                onMouseLeave={() => setIsHoveredTitle(false)}
+                className="relative overflow-visible max-w-3xl mx-auto w-full p-6 sm:p-10 rounded-[48px] border border-stone-200/50 bg-white/40 backdrop-blur-sm shadow-[0_15px_50px_rgba(124,149,228,0.04)] text-center flex flex-col gap-5 mt-2"
+                id="brand-hero-poster-banner"
+              >
+                {/* Decorative Floral Frame Corners */}
+                <div className="absolute top-4 left-4 w-6 h-6 border-t font-serif border-l border-stone-300 rounded-tl-xl pointer-events-none opacity-60" />
+                <div className="absolute top-4 right-4 w-6 h-6 border-t border-r border-stone-300 rounded-tr-xl pointer-events-none opacity-60" />
+                <div className="absolute bottom-4 left-4 w-6 h-6 border-b border-l border-stone-300 rounded-bl-xl pointer-events-none opacity-60" />
+                <div className="absolute bottom-4 right-4 w-6 h-6 border-b border-r border-stone-300 rounded-br-xl pointer-events-none opacity-60" />
+
+                {/* Embedded dynamic glowing ambiance orbs */}
+                <div 
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-36 bg-[#7C95E4]/10 rounded-full blur-3xl pointer-events-none -z-10 mix-blend-multiply transition-opacity duration-700" 
+                  style={{ opacity: isHoveredTitle ? 1 : 0.65 }} 
+                  id="glowing-ambiancer-orb"
+                />
+
+                {/* Rotating Vintage Milestone Seal / Stamp on Top Right */}
+                <motion.div 
+                  className="absolute right-3 top-3 sm:right-6 sm:top-6 z-20 pointer-events-auto cursor-help"
+                  whileHover={{ scale: 1.1, rotate: 15 }}
+                  onClick={() => {
+                    playCozySpark();
+                  }}
+                  id="milestone-20th-stamp-seal"
+                >
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-full border-2 border-dashed border-[#90A98C] bg-white shadow-sm p-1">
+                    <div className="w-full h-full rounded-full border border-[#90A98C]/40 flex flex-col items-center justify-center bg-stone-50">
+                      <span className="text-[6px] sm:text-[8px] font-mono font-bold tracking-widest text-stone-400 uppercase leading-none">EST.</span>
+                      <span className="text-sm sm:text-lg font-serif font-black text-[#90A98C] leading-none">20</span>
+                      <span className="text-[5px] sm:text-[7px] font-mono tracking-wider text-stone-400 uppercase leading-none">YEARS</span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Desktop Left Decorative Gentle Swaying Foliage Leaf */}
+                <motion.div 
+                  className="absolute left-[-24px] top-1/3 hidden lg:flex items-center justify-center pointer-events-none z-10"
+                  animate={{ 
+                    y: [0, -12, 0],
+                    rotate: [-3, 6, -3]
+                  }}
+                  transition={{
+                    duration: 7,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  id="botanical-swaying-decor-left"
+                >
+                  <div className={`p-3 rounded-full ${themeStyles.accentBg} ${themeStyles.accent} border ${themeStyles.accentBorder} shadow-md backdrop-blur-sm`}>
+                    <Leaf size={20} />
+                  </div>
+                </motion.div>
+
+                {/* Desktop Right Twinkling Constellation Cosmic Retro Star */}
+                <motion.div 
+                  className="absolute right-[-24px] top-1/2 hidden lg:flex items-center justify-center pointer-events-none z-10"
+                  animate={{ 
+                    scale: [0.95, 1.2, 0.95],
+                    rotate: [0, 180, 360],
+                    opacity: [0.8, 1, 0.8]
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                  id="cosmic-constell-decor-right"
+                >
+                  <div className="p-3 rounded-full bg-white border border-stone-200 shadow-md text-amber-500">
+                    <Sparkles size={20} className="filter drop-shadow-sm" />
+                  </div>
+                </motion.div>
+
+                {/* Sparkling elegant invite tagline with custom elegant botanical divider */}
+                <div className="flex flex-col items-center gap-1.5" id="invite-tagline-container">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center gap-3"
+                  >
+                    <span className="w-10 h-[1px] bg-[#7C95E4]/20" />
+                    <span className="font-cursive text-2xl text-[#7C95E4] select-none tracking-wide">
+                      You are cordially invited to
+                    </span>
+                    <span className="w-10 h-[1px] bg-[#7C95E4]/20" />
+                  </motion.div>
+
+                  <div className="flex items-center justify-center gap-1.5 text-stone-300">
+                    <span className="w-1 h-1 rounded-full bg-[#90A98C]/60" />
+                    <span className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#90A98C]/40" />
+                    <Leaf size={10} className="text-[#90A98C]/80 transform rotate-45" />
+                    <span className="w-16 h-[1px] bg-gradient-to-l from-transparent to-[#90A98C]/40" />
+                    <span className="w-1 h-1 rounded-full bg-[#90A98C]/60" />
+                  </div>
+                </div>
+
+                {/* Aesthetic Stagger-Lift Interactive Header Title */}
+                <h1 
+                  className={`relative text-4xl sm:text-7xl tracking-tight leading-none uppercase ${themeStyles.headingText} flex flex-wrap items-center justify-center gap-x-4 gap-y-2 select-none py-2`}
+                  id="staggered-header-title-box"
+                >
+                  {/* Primary Word "NATI'S" with subtle custom spring pop */}
+                  <motion.span 
+                    className="inline-block relative cursor-pointer font-serif font-black text-stone-850 hover:text-stone-900"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    id="title-part-natis"
+                  >
+                    NATI'S
+                  </motion.span>
+
+                  {/* Cursive handwritten "Picnic" Word with customized SVG drawing loop */}
+                  <span className="inline-block relative py-1 mx-1 group cursor-pointer" id="title-part-picnic-container">
+                    {/* Background miniature aura pillow */}
+                    <span className="absolute -inset-x-3 inset-y-1 bg-[#90A98C]/12 rounded-xl scale-75 group-hover:scale-105 transition-transform duration-300 -z-10" />
+                    
+                    <motion.span 
+                      className="font-cursive italic font-light text-5xl sm:text-8xl text-[#90A98C] normal-case block relative z-10"
+                      animate={{ rotate: [-1.5, 1.5, -1.5] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      whileHover={{ scale: 1.1, rotate: -4 }}
+                      id="title-part-picnic-text"
+                    >
+                      Picnic
+                    </motion.span>
+
+                    {/* Dynamic calligraphy draw-sweep underline */}
+                    <svg className="absolute left-0 bottom-[-4px] w-full h-[6px] overflow-visible pointer-events-none" viewBox="0 0 100 6">
+                      <motion.path 
+                        d="M 2, 3 Q 50, 6 98, 2" 
+                        fill="transparent" 
+                        stroke="#90A98C" 
+                        strokeWidth="3" 
+                        strokeLinecap="round"
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: isHoveredTitle ? 1 : 0.85 }}
+                        transition={{ duration: 1.2, ease: "easeOut" }}
+                      />
+                    </svg>
+                  </span>
+
+                  {/* Secondary Word "BIRTHDAY" in vibrant brand accent periwinkle */}
+                  <motion.span 
+                    className="inline-block relative cursor-pointer font-serif font-black text-[#7C95E4]"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    id="title-part-birthday"
+                  >
+                    BIRTHDAY
+                  </motion.span>
+
+                  {/* Floating Blossom & Leaf Sprinkler Particles Burst on Hover */}
+                  <AnimatePresence>
+                    {isHoveredTitle && (
+                      <div className="absolute inset-0 pointer-events-none overflow-visible z-20" id="particle-emitter-overlay">
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const angle = i * (360 / 12);
+                          const rad = (angle * Math.PI) / 180;
+                          const speed = 75 + Math.random() * 95;
+                          const targetX = Math.cos(rad) * speed;
+                          const targetY = Math.sin(rad) * speed - 15;
+                          const emojis = ["🌸", "🌿", "✨", "🌺", "🤍"];
+                          const emoji = emojis[i % emojis.length];
+                          
+                          return (
+                            <motion.div
+                              key={i}
+                              initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
+                              animate={{ 
+                                scale: [0, 1.2, 1, 0], 
+                                opacity: [0, 1, 0.8, 0],
+                                x: targetX,
+                                y: targetY,
+                                rotate: [0, Math.random() * 180 - 90]
+                              }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 1.3, ease: "easeOut" }}
+                              className="absolute text-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-sans"
+                            >
+                              {emoji}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </h1>
-                <div className="flex justify-center mt-2.5">
-                  <div className={`border-2 border-stone-850 px-8 py-2.5 rounded-full font-sans font-black text-xs sm:text-sm tracking-[0.2em] bg-white text-stone-850 shadow-sm uppercase ${themeStyles.accentRing} ring-4`}>
-                    🌿 Sunday, 7 June 2026 • 3:00 PM – Sunset
+
+                {/* Improved Date Pill with Double Contour Border & Dynamic Countdown Info Trigger */}
+                <div className="flex flex-col items-center gap-3.5 mt-2" id="date-pill-zone">
+                  <motion.div 
+                    onMouseEnter={() => setIsHoveredPill(true)}
+                    onMouseLeave={() => setIsHoveredPill(false)}
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      playCozySpark();
+                      setActiveTab("rsvp");
+                    }}
+                    className={`relative border-2 border-stone-850 px-8 py-3 rounded-full font-sans font-black text-xs sm:text-sm tracking-[0.2em] bg-white text-stone-850 shadow-md uppercase cursor-pointer select-none ${themeStyles.accentRing} ring-4 transition-all duration-300`}
+                    id="interactive-date-pill-button"
+                  >
+                    <div className="flex items-center gap-2">
+                      <motion.span 
+                        animate={{ 
+                          rotate: isHoveredPill ? [0, -15, 15, -15, 0] : 0,
+                          scale: isHoveredPill ? 1.25 : 1
+                        }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        className="text-base animate-bounce"
+                        style={{ animationDuration: "3s" }}
+                      >
+                        🌿
+                      </motion.span>
+                      <span>Sunday, 7 June 2026 • 3:00 PM – Sunset</span>
+                    </div>
+
+                    {/* Soft glowing active rim */}
+                    <div className="absolute -inset-1 rounded-full opacity-0 hover:opacity-100 transition-opacity pointer-events-none duration-300 ring-2 ring-[#7C95E4]/20 -z-10" />
+                  </motion.div>
+
+                  {/* Elegant Permanent Status & Live Weather Widget */}
+                  <div className="flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-[10px] font-mono tracking-widest text-stone-500 bg-stone-50/70 border border-stone-200/60 py-2 px-5 rounded-2xl max-w-lg shadow-sm" id="live-meadow-status-widget">
+                    <div className="flex items-center gap-2 border-r border-stone-200/80 pr-4">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block shrink-0" />
+                      <span className="font-bold text-stone-700">FORECAST:</span>
+                      <span className="text-stone-600">🌤️ 22°C Gentle Sun</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#7C95E4]">★</span>
+                      <span className="font-bold text-stone-700">MEADOW:</span>
+                      <span className="text-stone-600">Soft Picnic Grass</span>
+                    </div>
+                  </div>
+
+                  {/* High Quality Persistent Countdown Display */}
+                  <div className="w-full max-w-sm bg-white border border-stone-150/80 rounded-2xl p-3 shadow-inner flex items-center justify-around" id="high-quality-persistent-countdown">
+                    <div className="text-center">
+                      <span className="block text-lg font-serif font-black text-[#7C95E4] leading-none mb-0.5">
+                        {timeLeft.isPast ? "0" : timeLeft.days}
+                      </span>
+                      <span className="text-[7px] font-mono tracking-widest text-stone-400 uppercase">Days</span>
+                    </div>
+                    <div className="text-stone-250 font-light font-mono text-xs">:</div>
+                    <div className="text-center">
+                      <span className="block text-lg font-serif font-black text-[#7C95E4] leading-none mb-0.5">
+                        {timeLeft.isPast ? "0" : timeLeft.hours}
+                      </span>
+                      <span className="text-[7px] font-mono tracking-widest text-stone-400 uppercase">Hours</span>
+                    </div>
+                    <div className="text-stone-250 font-light font-mono text-xs">:</div>
+                    <div className="text-center">
+                      <span className="block text-lg font-serif font-black text-[#7C95E4] leading-none mb-0.5">
+                        {timeLeft.isPast ? "0" : timeLeft.minutes}
+                      </span>
+                      <span className="text-[7px] font-mono tracking-widest text-stone-400 uppercase">Minutes</span>
+                    </div>
+                    <div className="text-stone-250 font-light font-mono text-xs">:</div>
+                    <div className="text-center animate-pulse" style={{ animationDuration: "1s" }}>
+                      <span className="block text-lg font-serif font-black text-[#90A98C] leading-none mb-0.5">
+                        {timeLeft.isPast ? "0" : timeLeft.seconds}
+                      </span>
+                      <span className="text-[7px] font-mono tracking-widest text-stone-400 uppercase">Secs</span>
+                    </div>
+                  </div>
+
+                  {/* Tap to RSVP action visual promoter */}
+                  <div className="h-4 relative overflow-visible" id="floating-countdown-notice-wrap">
+                    <AnimatePresence>
+                      {isHoveredPill && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0 }}
+                          className={`text-[9px] font-mono uppercase tracking-[0.2em] font-semibold ${theme === 'aurora' ? 'text-[#8FA3E6]' : 'text-[#7C95E4]'}`}
+                          id="active-countdown-pill-tooltip"
+                        >
+                          {timeLeft.isPast ? "Celebration is Live! 🎉" : "Countdown is running live ⏳"}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
@@ -765,8 +1049,8 @@ export default function App() {
                 <div className="lg:col-span-7 flex flex-col gap-6">
                   
                   {/* NAVIGATION TABS DECK */}
-                  <div className="flex overflow-x-auto pb-1 scrollbar-none">
-                    <nav className="flex gap-2 p-1.5 bg-white/70 border border-stone-200/50 rounded-full shadow-sm max-w-full">
+                  <div className="w-full overflow-x-auto pb-2 scrollbar-none flex justify-start sm:justify-center" id="navigation-tabs-deck-scroller">
+                    <nav className="flex gap-1 p-1 bg-white/80 border border-stone-200/50 rounded-full shadow-sm min-w-max mx-auto sm:mx-0">
                       {[
                         { id: "home", label: "Home 🌿" },
                         { id: "details", label: "Coordinates 📍" },
@@ -782,7 +1066,7 @@ export default function App() {
                               setActiveTab(tab.id as any);
                               playCozySpark();
                             }}
-                            className={`relative px-4 sm:px-6 py-2.5 rounded-full font-sans text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-300 cursor-pointer focus:outline-none ${
+                            className={`relative px-3 sm:px-[18px] py-1.5 sm:py-2 rounded-full font-sans text-xs sm:text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-300 cursor-pointer focus:outline-none ${
                               isActive 
                                 ? "text-white font-black" 
                                 : "text-stone-600 hover:text-stone-850"
@@ -858,85 +1142,231 @@ export default function App() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -15 }}
                           transition={{ duration: 0.25 }}
-                          className={`glass-card p-6 sm:p-10 rounded-[32px] border ${themeStyles.panelBg}`}
+                          className={`glass-card p-4 sm:p-8 rounded-[32px] border flex flex-col gap-6 ${themeStyles.panelBg}`}
                         >
-                          <div className="text-left mb-6">
-                            <h3 className="text-xl sm:text-2xl font-serif font-black">Meadow Location Coordinates</h3>
-                            <p className="text-[10px] text-stone-400 font-mono tracking-widest uppercase mt-0.5">GPS RADAR SYSTEM ACTIVE</p>
-                          </div>
-
-                          {/* Beautiful Interactive Radar Schematic Component */}
-                          <div className="p-6 rounded-3xl border border-stone-200 bg-[#F9F6F1] relative overflow-hidden text-left flex flex-col md:flex-row items-center gap-6">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="text-left animate-fade-in">
+                              <h3 className="text-xl sm:text-2xl font-serif font-black text-stone-850">Korea Park Event Map</h3>
+                              <p className="text-[10px] text-stone-400 font-mono tracking-widest uppercase mt-0.5">FULLY INTERACTIVE RADAR & LOCATION HUB</p>
+                            </div>
                             
-                            {/* Spinning Radar vector canvas */}
-                            <div className="w-[170px] aspect-square rounded-full border border-stone-200 bg-black/5 relative overflow-hidden flex items-center justify-center shrink-0">
-                              {/* Radial sweep glow grid */}
-                              <div className="absolute inset-0 bg-[radial-gradient(#7C95E4_1.5px,transparent_1.5px)] [background-size:12px_12px] opacity-15" />
-                              <div className="absolute w-32 h-32 rounded-full border border-dashed border-[#7C95E4]/25 animate-spin" style={{ animationDuration: "18s" }} />
-                              <div className="absolute w-20 h-20 rounded-full border border-[#90A98C]/30 animate-pulse" />
-                              
-                              <motion.div
-                                animate={{ rotate: [0, 360] }}
-                                transition={{ repeat: Infinity, duration: 4.5, ease: "linear" }}
-                                style={{ transformOrigin: "center" }}
-                                className="absolute inset-0 border-r-2 border-dashed border-[#7C95E4]/40 z-0"
-                              />
-
-                              {/* Pinging GPS pinpoint coordinate badge */}
-                              <div className="relative z-10 flex flex-col items-center gap-1">
-                                <motion.div
-                                  animate={{ y: [0, -6, 0] }}
-                                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                                  className="text-[#7C95E4] drop-shadow-lg"
-                                >
-                                  <MapPin size={34} className="fill-[#7C95E4]/20 text-[#7C95E4]" />
-                                </motion.div>
-                                <span className="text-[8px] font-mono font-bold bg-[#7C95E4] text-white px-2 py-0.5 rounded-full uppercase leading-none">MEADOW PIN</span>
-                              </div>
-
-                              <div className="absolute top-2 left-2 text-[7px] font-mono uppercase bg-white/90 border border-stone-150 px-1.5 py-0.5 rounded">
-                                Radar Live • 2026
-                              </div>
+                            {/* Toggle switcher between Layout and Real GPS */}
+                            <div className="flex p-1 bg-stone-100 rounded-xl border border-stone-200 self-start sm:self-auto shadow-inner">
+                              <button
+                                type="button"
+                                onClick={() => { setMapMode("layout"); playCozySpark(); }}
+                                className={`px-3.5 py-1.5 rounded-lg text-[10px] font-mono uppercase font-black transition-all cursor-pointer ${
+                                  mapMode === "layout"
+                                    ? "bg-white text-stone-850 shadow-sm"
+                                    : "text-stone-500 hover:text-stone-700"
+                                }`}
+                              >
+                                🗺️ Picnic Spot Board
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setMapMode("gps"); playCozySpark(); }}
+                                className={`px-3.5 py-1.5 rounded-lg text-[10px] font-mono uppercase font-black transition-all cursor-pointer ${
+                                  mapMode === "gps"
+                                    ? "bg-white text-stone-850 shadow-sm"
+                                    : "text-stone-500 hover:text-stone-700"
+                                }`}
+                              >
+                                🛰️ Real GPS Navigation
+                              </button>
                             </div>
-
-                            {/* Coordinate spec data */}
-                            <div className="flex-1 text-left flex flex-col gap-3">
-                              <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[10px] font-mono tracking-widest text-[#90A98C] font-black uppercase">Pins Broadcast Incoming</span>
-                              </div>
-
-                              <h4 className="font-serif font-black text-lg text-stone-800 leading-tight">Addis Ababa Secret Area Garden</h4>
-                              
-                              <p className="text-xs text-stone-500 leading-relaxed font-sans font-light">
-                                For maximum comfort and neat safety, the active meadow GPS coordinates inside Addis Ababa will be shared live here 24 hours before early Sunday kick-off.
-                              </p>
-
-                              <div className="border-t border-stone-200/60 pt-3 flex flex-wrap items-center gap-4">
-                                <div>
-                                  <span className="block text-[8px] font-mono uppercase text-stone-400">Zone Area</span>
-                                  <span className="text-xs font-bold text-stone-700">Addis Ababa, Ethiopia</span>
-                                </div>
-                                <div className="h-6 w-[1.5px] bg-stone-200"></div>
-                                <div>
-                                  <span className="block text-[8px] font-mono uppercase text-stone-400 font-medium">Precision Grid</span>
-                                  <span className="text-xs font-mono font-bold text-stone-700">9.0300° N, 38.7400° E</span>
-                                </div>
-                              </div>
-
-                              <div className="mt-2 text-left">
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={downloadICSFile}
-                                  className={`py-2.5 px-5 rounded-xl text-[10px] font-mono uppercase font-black tracking-widest transition-all inline-flex items-center gap-2 cursor-pointer ${themeStyles.buttonPrimary}`}
-                                >
-                                  <Calendar size={12} /> Sync Calendar File (.ics)
-                                </motion.button>
-                              </div>
-                            </div>
-
                           </div>
+
+                          {/* Render the selected Map View */}
+                          <AnimatePresence mode="wait">
+                            {mapMode === "layout" ? (
+                              <motion.div
+                                key="layout-map"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                className="flex flex-col gap-6 w-full text-left"
+                              >
+                                {/* Highly interactive Stylized Garden Layout Map Canvas */}
+                                <div className="border border-stone-200 rounded-3xl p-4 bg-[#F2EDE4] relative overflow-hidden h-72 sm:h-80 shadow-md">
+                                  {/* Dynamic ambient grid background */}
+                                  <div className="absolute inset-0 bg-[#E8E2D6] opacity-40 [background-size:24px_24px] bg-[linear-gradient(to_right,#C8BEAF_1px,transparent_1px),linear-gradient(to_bottom,#C8BEAF_1px,transparent_1px)]" />
+                                  
+                                  {/* Green Meadow circular shapes representing forest canopy */}
+                                  <div className="absolute top-[10%] left-[10%] w-24 h-24 rounded-full bg-[#90A98C]/20 blur-md pointer-events-none" />
+                                  <div className="absolute bottom-[10%] right-[10%] w-32 h-32 rounded-full bg-[#90A98C]/15 blur-lg pointer-events-none" />
+                                  <div className="absolute top-[40%] right-[5%] w-24 h-24 rounded-full bg-[#90A98C]/12 blur-md pointer-events-none" />
+                                  
+                                  {/* Title seal */}
+                                  <div className="absolute bottom-3 left-3 bg-white/90 border border-stone-200/80 px-2 py-1 rounded-lg text-[8px] font-mono leading-none tracking-widest text-stone-500 shadow-sm">
+                                    EST. KOREA-ETHIOPIA MEMORIAL PARK (KOREA PARK)
+                                  </div>
+
+                                  {/* Picnic map pathways & boundaries */}
+                                  <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+                                    <path d="M 50 0 Q 70 120, 50 240 T 70 360" fill="transparent" stroke="#8E8272" strokeWidth="4" strokeDasharray="6,4" />
+                                    <path d="M 0 150 Q 180 180, 400 130" fill="transparent" stroke="#8E8272" strokeWidth="3" strokeDasharray="6,4" />
+                                  </svg>
+
+                                  {/* Pinpoints mapping */}
+                                  {[
+                                    { id: "lawn", name: "Center Lawn 🏞️", x: "48%", y: "45%", color: "bg-emerald-500", emoji: "🏞️" },
+                                    { id: "cake", name: "Cake Altar 🎂", x: "78%", y: "25%", color: "bg-amber-500", emoji: "🎂" },
+                                    { id: "drinks", name: "Drinks Box 🥤", x: "25%", y: "22%", color: "bg-[#7C95E4]", emoji: "🥤" },
+                                    { id: "fruits", name: "Fruit Blanket 🍓", x: "18%", y: "68%", color: "bg-rose-500", emoji: "🍓" },
+                                    { id: "snacks", name: "Snacks Canopy 🍩", x: "74%", y: "72%", color: "bg-orange-500", emoji: "🍩" },
+                                  ].map((zone) => {
+                                    const isSelected = selectedMapZone === zone.id;
+                                    return (
+                                      <button
+                                        key={zone.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedMapZone(zone.id as any);
+                                          playPopSound();
+                                        }}
+                                        style={{ left: zone.x, top: zone.y }}
+                                        className="absolute -translate-x-1/2 -translate-y-1/2 group cursor-pointer z-20 focus:outline-none"
+                                      >
+                                        <div className="relative flex items-center justify-center">
+                                          {/* Ripple pulse wave for selected pin */}
+                                          {isSelected && (
+                                            <span className="absolute inline-flex h-12 w-12 rounded-full bg-white animate-ping opacity-25" />
+                                          )}
+                                          
+                                          {/* Visual connection line to map labels */}
+                                          <div className={`p-2 sm:p-2.5 rounded-full border-2 ${
+                                            isSelected 
+                                              ? "bg-white border-stone-850 shadow-lg scale-110" 
+                                              : "bg-stone-50 border-stone-200 hover:border-stone-400 hover:scale-105"
+                                          } transition-all duration-300 relative z-10 flex items-center justify-center`}>
+                                            <span className="text-base sm:text-lg leading-none select-none">{zone.emoji}</span>
+                                          </div>
+
+                                          {/* Small tooltip tag */}
+                                          <div className={`absolute bottom-[108%] min-w-max bg-stone-900 text-white font-mono text-[8px] sm:text-[9px] uppercase tracking-wider py-1 px-2 rounded-md shadow-md pointer-events-none transition-all duration-300 ${
+                                            isSelected ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 scale-95 group-hover:opacity-100 group-hover:translate-y-0"
+                                          }`}>
+                                            {zone.name}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Hotspot Details Pane */}
+                                <div className="bg-[#FCFBF9] border border-stone-200/80 p-5 sm:p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-sm">
+                                  <div className="flex-1 flex gap-4 items-start text-left">
+                                    <div className="text-3xl sm:text-4xl p-3 bg-white border border-stone-200 shadow-sm rounded-2xl shrink-0 mt-0.5">
+                                      {selectedMapZone === "lawn" ? "🏞️" :
+                                       selectedMapZone === "cake" ? "🎂" :
+                                       selectedMapZone === "drinks" ? "🥤" :
+                                       selectedMapZone === "fruits" ? "🍓" : "🍩"}
+                                    </div>
+                                    <div className="flex flex-col gap-1.5 animate-fade-in">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-mono font-bold tracking-widest text-[#7C95E4] uppercase bg-[#7C95E4]/10 border border-[#7C95E4]/25 px-2 py-0.5 rounded">
+                                          {selectedMapZone === "lawn" ? "Main Base" :
+                                           selectedMapZone === "cake" ? "Birthday Special" :
+                                           selectedMapZone === "drinks" ? "Drinks Chiller" :
+                                           selectedMapZone === "fruits" ? "Fresh Fruits Platters" : "Savory Bites"}
+                                        </span>
+                                      </div>
+                                      <h4 className="font-serif font-black text-base sm:text-lg text-stone-850 leading-none">
+                                        {selectedMapZone === "lawn" && "Korea Park Centenary Lawn"}
+                                        {selectedMapZone === "cake" && "Birthday Cake Altar"}
+                                        {selectedMapZone === "drinks" && "Refreshing Drinks Cooler Box"}
+                                        {selectedMapZone === "fruits" && "Fresh Fruit Bowl (Banana, Habab, Orange, Strawberries)"}
+                                        {selectedMapZone === "snacks" && "Crispy & Savory Snacks Corner (Chips, Cookies, Sambusa, Donuts)"}
+                                      </h4>
+                                      <p className="text-xs text-stone-500 font-sans font-light leading-relaxed">
+                                        {selectedMapZone === "lawn" && "Where we spread out custom picnic blankets, share hilarious stories, tune the acoustical instruments, and launch the garden card game rounds under Addis Ababa's clear, friendly sky."}
+                                        {selectedMapZone === "cake" && "The crown milestone center where Nati's majestic 20th birthday cake is served. We gather here at sundown for candle blows, warm snaps, and sweet birthday songs!"}
+                                        {selectedMapZone === "drinks" && "Fully packed with cold beverages, citrusy orange juice buckets, premium soft drinks, and custom fruit coolers to beat the friendly summer park temperature!"}
+                                        {selectedMapZone === "fruits" && "A stellar, farm-fresh fruit arrangement offering perfectly sliced sweet bananas, cold sweet watermelon cubes (Ethiopian Habab), zesty orange quarters, and vibrant red strawberries."}
+                                        {selectedMapZone === "snacks" && "Our sweet and salty backup power block! Features classic salted crispy potato chips, freshly baked chocolate chip cookies, traditional warm Ethiopian savory meat/veggie Sambusas, and powdered ring donuts."}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Practical Action CTA for each Spot */}
+                                  <div className="w-full md:w-auto mt-2 md:mt-0 shrink-0 border-t md:border-t-0 md:border-l border-stone-200/80 pt-4 md:pt-0 md:pl-6 text-left">
+                                    <span className="block text-[8px] font-mono uppercase text-stone-400 tracking-wider">Zone Instruction</span>
+                                    <span className="text-xs font-bold text-stone-700 block mt-0.5">
+                                      {selectedMapZone === "lawn" && "Bring card decks!"}
+                                      {selectedMapZone === "cake" && "Prepare beautiful wishes!"}
+                                      {selectedMapZone === "drinks" && "Ice blocks provided!"}
+                                      {selectedMapZone === "fruits" && "Chilled to serve!"}
+                                      {selectedMapZone === "snacks" && "Eat warm if possible!"}
+                                    </span>
+                                    <button 
+                                      type="button"
+                                      onClick={() => { setActiveTab("vibes"); playCozySpark(); }}
+                                      className="text-[9px] font-mono uppercase text-[#7C95E4] hover:text-[#5B73C2] transition-colors mt-2 flex items-center gap-1 cursor-pointer font-bold bg-transparent border-0 p-0 focus:outline-none"
+                                    >
+                                      Go to Vibes menu <ChevronRight size={10} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="gps-map"
+                                initial={{ opacity: 0, scale: 0.98 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                className="flex flex-col gap-4 w-full"
+                              >
+                                {/* Fully zoomable OpenStreetMap Frame embed */}
+                                <div className="rounded-3xl overflow-hidden border border-stone-200 shadow-md relative h-80 bg-stone-100">
+                                  <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    src="https://www.openstreetmap.org/export/embed.html?bbox=38.7562,9.0232,38.7662,9.0312&amp;layer=mapnik&amp;marker=9.02722,38.76139" 
+                                    className="border-0 w-full h-full"
+                                    title="Korea Park Addis Ababa"
+                                  />
+                                  <div className="absolute top-2 left-2 bg-white/95 border border-stone-150 px-2.5 py-1 rounded-xl text-[9px] font-mono uppercase font-black text-stone-600 shadow-sm flex items-center gap-1.5 pointer-events-none">
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                                    <span>LIVE MAP CHANNEL</span>
+                                  </div>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+                                  <div className="flex items-center gap-3">
+                                    <MapPin size={20} className="text-[#90A98C]" />
+                                    <div>
+                                      <h5 className="text-xs font-bold text-stone-700">Korea-Ethiopia Memorial Park (Korea Park)</h5>
+                                      <p className="text-[10px] text-stone-400 font-sans mt-0.5">Addis Ababa, Ethiopia (near Bole road / Centenary spots)</p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex gap-2 w-full sm:w-auto justify-end">
+                                    <motion.a
+                                      href="https://maps.app.goo.gl/iV58btnZk2H4twedA"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      className={`py-2 px-4 rounded-xl text-[9px] font-mono uppercase font-black tracking-wider transition-all inline-flex items-center gap-1.5 cursor-pointer text-center justify-center ${themeStyles.buttonPrimary}`}
+                                    >
+                                      <MapPin size={11} /> Google Maps Pin ↗
+                                    </motion.a>
+                                    <motion.button
+                                      type="button"
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={downloadICSFile}
+                                      className="py-2 px-4 rounded-xl text-[9px] font-mono uppercase font-black tracking-wider transition-all inline-flex items-center gap-1.5 cursor-pointer bg-white border border-stone-200 text-stone-600 hover:bg-stone-50"
+                                    >
+                                      <Calendar size={11} /> Sync Calendar
+                                    </motion.button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </motion.div>
                       )}
 
@@ -956,12 +1386,12 @@ export default function App() {
                             <p className="text-[10px] text-stone-400 font-mono tracking-widest uppercase mt-0.5 font-bold">MEADOW REFRESHMENTS MENU</p>
                           </div>
 
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                             {[
-                              { emoji: "🍩", label: "Gourmet Cupcakes", notes: "Frosted Sweetness" },
-                              { emoji: "🍓", label: "Fresh Berries", notes: "Sun-ripened organic" },
-                              { emoji: "🥤", label: "Fruity Coolers", notes: "Freshly squeezed mint" },
-                              { emoji: "🥪", label: "Meadow Sliders", notes: "Sandwich blocks" }
+                              { emoji: "🎂", label: "Milestone Birthday Cake", notes: "Custom Vanilla Frosting" },
+                              { emoji: "🥤", label: "Refreshing Drinks", notes: "Ice-cold soda & custom juices" },
+                              { emoji: "🍓", label: "Fresh Fruits Platter", notes: "Banana, Habab, Orange, Strawberries" },
+                              { emoji: "🍩", label: "Savory & Sweet Snacks", notes: "Chips, Cookies, Sambusa, Donuts" }
                             ].map((food, idx) => (
                               <div key={idx} className="bg-[#FAF8F5] border border-stone-200 p-4 rounded-2xl flex flex-col items-center gap-1.5 shadow-sm hover:translate-y-[-2px] transition-transform">
                                 <span className="text-3xl">{food.emoji}</span>
@@ -969,6 +1399,26 @@ export default function App() {
                                 <span className="text-[9px] font-sans font-light text-stone-400 leading-none">{food.notes}</span>
                               </div>
                             ))}
+                          </div>
+
+                          {/* Korea Park Host Card */}
+                          <div className="mt-5 p-4 rounded-2xl border border-[#90A98C]/30 bg-[#90A98C]/5 text-left flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex gap-3 items-start">
+                              <span className="text-3xl p-1 bg-white border border-[#90A98C]/20 rounded-xl leading-none shadow-sm mt-0.5 sm:mt-0 select-none">🏞️</span>
+                              <div>
+                                <h5 className="text-xs font-bold text-stone-800">Hosted at Korea-Ethiopia Memorial Park</h5>
+                                <p className="text-[10px] text-stone-500 font-sans font-light leading-relaxed mt-0.5">
+                                  Korea Park offers a gorgeous, peaceful natural ecosystem featuring beautiful memorial monuments, dense centenary pine shade trees, and pristine open-air picnic grass beds suited for dynamic card loops and birthday karaoke.
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setActiveTab("details"); playCozySpark(); }}
+                              className="text-[9px] font-mono uppercase bg-[#90A98C] hover:bg-[#7D9579] text-white font-bold py-2 px-3 rounded-xl transition-all shadow-sm cursor-pointer whitespace-nowrap shrink-0 border-0 focus:outline-none"
+                            >
+                              View on Interactive Map 🗺️
+                            </button>
                           </div>
 
                           {/* Activities section */}
@@ -1334,68 +1784,7 @@ export default function App() {
 
               </div>
 
-              {/* REAL-TIME RSVP GUESTBOOK WALL SCREEN */}
-              <div className="mt-12 text-left" id="meadow-guestbook-wall">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-1.5 h-6 rounded bg-[#7C95E4]" />
-                  <h3 className={`text-xl font-serif font-black ${themeStyles.headingText}`}>
-                    Meadow Custom Guest Wall ({rsvpList.length})
-                  </h3>
-                </div>
 
-                {rsvpList.length === 0 ? (
-                  <p className="text-stone-400 text-xs italic">No registrations submitted yet. Break the mold and register first!</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {rsvpList.map((g, idx) => (
-                      <motion.div
-                        key={idx}
-                        whileHover={{ y: -4, rotate: (idx % 2 === 0 ? -1 : 1) * 0.5 }}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                        className={`p-6 rounded-3xl border ${themeStyles.guestCardBg} relative overflow-hidden flex flex-col justify-between aspect-[16/10]`}
-                      >
-                        {/* Polaroid photo mock style */}
-                        <div>
-                          <div className="flex justify-between items-start mb-3">
-                            <span className="text-[9px] font-mono text-stone-400 uppercase tracking-widest leading-none">
-                              Registry Member • N°{String(idx + 1).padStart(2, '0')}
-                            </span>
-                            <span className={`text-[8px] font-mono tracking-widest uppercase px-2 py-0.5 rounded-full font-bold leading-none ${
-                              g.attending ? "bg-emerald-100 text-emerald-800" : "bg-rose-100/50 text-rose-700"
-                            }`}>
-                              {g.attending ? "✓ Attending" : "Declined"}
-                            </span>
-                          </div>
-
-                          <h4 className="font-serif font-black text-sm text-[#2B2F38] tracking-tight">{g.name}</h4>
-                          <p className="text-xs text-stone-500 font-sans italic mt-2 leading-relaxed">
-                            "{g.note}"
-                          </p>
-                        </div>
-
-                        {/* Song request record badge */}
-                        <div className="border-t border-dashed border-stone-200/50 pt-3 mt-3 flex justify-between items-center">
-                          {g.song && (
-                            <div className="flex items-center gap-2 text-[9px] font-mono text-stone-450 truncate max-w-[70%]">
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-                                className="text-stone-400 shrink-0"
-                              >
-                                <Disc size={11} />
-                              </motion.div>
-                              <span className="truncate">Req: <strong className="text-stone-600 font-semibold">{g.song}</strong></span>
-                            </div>
-                          )}
-                          <span className="text-[8px] font-mono text-stone-400 shrink-0 uppercase">{g.date || "June 2026"}</span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* POSTER FOOTER DESIGN CREDITS */}
               <div className="max-w-xl mx-auto w-full px-6 text-center mt-12 bg-white/40 border border-stone-200/50 rounded-3xl p-5 shadow-sm">
