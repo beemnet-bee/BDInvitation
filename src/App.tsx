@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { CardThemeType } from "./types";
 import AmbientBackground from "./components/AmbientBackground";
+import SplashScreen from "./components/SplashScreen";
 import { 
   playPopSound, playCozySpark, playCelebrationBurst, 
   playInvitationTheme, startAmbientBackground, stopAmbientBackground 
@@ -93,6 +94,7 @@ const SECRET_TIPS = [
 ];
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [theme, setTheme] = useState<CardThemeType>("swiss");
   const [isEnvelopeOpened, setIsEnvelopeOpened] = useState<boolean>(() => {
     return localStorage.getItem("picnic_envelope_opened") === "true";
@@ -126,8 +128,17 @@ export default function App() {
   });
 
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false);
-  const [lastSubmittedGuest, setLastSubmittedGuest] = useState<any>(null);
+  const [lastSubmittedGuest, setLastSubmittedGuest] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem("picnic_my_rsvp");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(() => {
+    return typeof window !== "undefined" && localStorage.getItem("picnic_my_rsvp") !== null;
+  });
 
   // Envelope tilt physics coordinates
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -310,6 +321,14 @@ export default function App() {
     }
   };
 
+  const getExistingRSVP = (nameInput: string) => {
+    const norm = nameInput.trim().toLowerCase();
+    if (!norm) return null;
+    return rsvpList.find(r => r.name.trim().toLowerCase() === norm || 
+      OFFICIAL_GUESTS_DATA.some(g => (g.display.toLowerCase() === norm || g.id.toLowerCase() === norm) && r.name.toLowerCase() === g.display.toLowerCase())
+    );
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
@@ -323,6 +342,11 @@ export default function App() {
     if (!matched) {
       playPopSound();
       return;
+    }
+
+    if (getExistingRSVP(trimmed)) {
+      playPopSound();
+      return; // Do not submit again if they already RSVP'd
     }
 
     const payload = {
@@ -345,6 +369,7 @@ export default function App() {
       const updatedList = [payload, ...rsvpList];
       setRsvpList(updatedList);
       localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+      localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
       sendTelegramNotificationClient(payload);
     } else {
       fetch("/api/rsvp", {
@@ -357,10 +382,12 @@ export default function App() {
           if (resData.success) {
             setRsvpList(resData.list);
             localStorage.setItem("picnic_rsvp_list", JSON.stringify(resData.list));
+            localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
           } else {
             const updatedList = [payload, ...rsvpList];
             setRsvpList(updatedList);
             localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+            localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
             sendTelegramNotificationClient(payload);
           }
         })
@@ -369,6 +396,7 @@ export default function App() {
           const updatedList = [payload, ...rsvpList];
           setRsvpList(updatedList);
           localStorage.setItem("picnic_rsvp_list", JSON.stringify(updatedList));
+          localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
           sendTelegramNotificationClient(payload);
         });
     }
@@ -378,6 +406,7 @@ export default function App() {
     setFormNote("");
 
     setLastSubmittedGuest(payload);
+    localStorage.setItem("picnic_my_rsvp", JSON.stringify(payload));
     setSubmissionSuccess(true);
     playCelebrationBurst();
   };
@@ -514,6 +543,12 @@ export default function App() {
 
   return (
     <div className={`min-h-screen relative flex flex-col antialiased transition-all duration-700 ease-out select-none pb-20 overflow-x-hidden bg-gradient-to-br ${themeStyles.bgGradient}`}>
+      
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen onComplete={() => { playCozySpark(); setShowSplash(false); }} />
+        )}
+      </AnimatePresence>
       
       {/* Precision Decorative Grid Layout lines */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.22] bg-[radial-gradient(rgba(124,149,228,0.25)_1px,transparent_1px)] [background-size:20px_20px] z-0" />
@@ -2113,16 +2148,55 @@ export default function App() {
                                     )}
 
                                     {formName.trim() && isOfficialGuest(formName) && (
-                                      <motion.div
-                                        initial={{ opacity: 0, y: -5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-2xl flex gap-2 items-center text-left mt-2 shadow-sm"
-                                      >
-                                        <span className="text-sm select-none">🌿</span>
-                                        <div className="text-[10px] text-emerald-800 font-medium font-sans">
-                                          Invite verified! Welcome to Nati's 20th surprise party roster. 😊
-                                        </div>
-                                      </motion.div>
+                                      <>
+                                        {getExistingRSVP(formName) ? (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="bg-amber-50 border border-amber-200/60 p-3.5 rounded-2xl flex flex-col gap-2.5 text-left mt-2 shadow-sm text-stone-805"
+                                          >
+                                            <div className="flex gap-2.5 items-start">
+                                              <span className="text-base select-none">💖</span>
+                                              <div>
+                                                <h5 className="text-[10px] font-bold text-amber-900 font-mono uppercase tracking-wider">Already Accepted RSVP</h5>
+                                                <p className="text-[10px] text-amber-750 font-sans font-normal leading-relaxed mt-0.5">
+                                                  <strong className="font-semibold underline">{getExistingRSVP(formName)?.name}</strong> is already registered in Nati's secret garden database!
+                                                </p>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="border-t border-dashed border-amber-200 my-0.5" />
+                                            
+                                            <div className="text-[9px] space-y-1 font-mono text-stone-600">
+                                              <div className="flex justify-between">
+                                                <span className="font-bold">STATUS:</span>
+                                                <span className={`font-black uppercase ${getExistingRSVP(formName)?.attending ? "text-emerald-700" : "text-rose-600"}`}>
+                                                  {getExistingRSVP(formName)?.attending ? "COUNTED IN (ATTENDING) ✓" : "DECLINED ✖"}
+                                                </span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="font-bold">SONG REQUESTED:</span>
+                                                <span className="font-semibold truncate max-w-[180px] text-stone-700">{getExistingRSVP(formName)?.song || "None"}</span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="font-bold">SWEET WISH:</span>
+                                                <span className="italic truncate max-w-[180px] text-stone-550">"{getExistingRSVP(formName)?.note || "None"}"</span>
+                                              </div>
+                                            </div>
+                                          </motion.div>
+                                        ) : (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-2xl flex gap-2 items-center text-left mt-2 shadow-sm"
+                                          >
+                                            <span className="text-sm select-none">🌿</span>
+                                            <div className="text-[10px] text-emerald-800 font-medium font-sans">
+                                              Invite verified! Welcome to Nati's 20th surprise party roster. 😊
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </>
                                     )}
                                   </div>
 
@@ -2177,17 +2251,21 @@ export default function App() {
                                   </div>
 
                                   <motion.button
-                                    whileHover={isOfficialGuest(formName) ? { scale: 1.02 } : {}}
-                                    whileTap={isOfficialGuest(formName) ? { scale: 0.98 } : {}}
+                                    whileHover={isOfficialGuest(formName) && !getExistingRSVP(formName) ? { scale: 1.02 } : {}}
+                                    whileTap={isOfficialGuest(formName) && !getExistingRSVP(formName) ? { scale: 0.98 } : {}}
                                     type="submit"
-                                    disabled={!isOfficialGuest(formName)}
+                                    disabled={!isOfficialGuest(formName) || !!getExistingRSVP(formName)}
                                     className={`w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest text-center cursor-pointer font-mono duration-150 ${
-                                      isOfficialGuest(formName) 
+                                      isOfficialGuest(formName) && !getExistingRSVP(formName)
                                         ? themeStyles.buttonPrimary 
                                         : "bg-stone-100 border border-stone-200 text-stone-400 cursor-not-allowed"
                                     }`}
                                   >
-                                    {isOfficialGuest(formName) ? "Send secure RSVP 💌" : "Unlock RSVP with Whitelisted Name 🔒"}
+                                    {!isOfficialGuest(formName) 
+                                      ? "Unlock RSVP with Whitelisted Name 🔒" 
+                                      : getExistingRSVP(formName)
+                                        ? "Already Registered on Meadow List ✨" 
+                                        : "Send secure RSVP 💌"}
                                   </motion.button>
                                 </motion.form>
                               )}
