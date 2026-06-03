@@ -69,7 +69,9 @@ const OFFICIAL_GUESTS_DATA = [
   { id: "ruth", display: "Ruth", emoji: "🌸" },
   { id: "sifen", display: "Sifen", emoji: "🐳" },
   { id: "tibebe", display: "Tibebe", emoji: "🍀" },
-  { id: "yonas", display: "Yonas", emoji: "🕺" }
+  { id: "yanet", display: "Yanet", emoji: "🦋" },
+  { id: "yonas", display: "Yonas", emoji: "🕺" },
+  { id: "yonatan", display: "Yonatan", emoji: "🦊" }
 ];
 
 const INITIAL_GUESTS: any[] = [];
