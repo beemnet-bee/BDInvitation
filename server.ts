@@ -91,6 +91,7 @@ const RSVP_FILE = path.join(process.cwd(), "rsvps.json");
 const OFFICIAL_GUESTS_DATA = [
   { id: "barkot", display: "Barkot", emoji: "🐨" },
   { id: "beemnet", display: "Beemnet", emoji: "✨" },
+  { id: "bereket", display: "Bereket", emoji: "🐼" },
   { id: "betibeb", display: "Betibeb", emoji: "🎨" },
   { id: "bini", display: "Bini", emoji: "🎸" },
   { id: "estube", display: "Estube", emoji: "🧁" },
